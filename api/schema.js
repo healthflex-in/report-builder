@@ -1,25 +1,9 @@
-const { MongoClient } = require('mongodb');
-
-const uri = process.env.MONGO_URI;
-const dbName = process.env.MONGO_DB_NAME || 'stance-dashboard';
-
-let cachedClient = null;
-
-async function connectToDatabase() {
-  if (cachedClient) return cachedClient;
-  const client = new MongoClient(uri);
-  await client.connect();
-  cachedClient = client;
-  return client;
-}
+const { getDb } = require('./_db');
 
 module.exports = async (req, res) => {
-  const client = await connectToDatabase();
-  const db = client.db(dbName);
+  const db = await getDb();
   const collection = db.collection('report-schema');
 
-  // GET /api/schema?id=hyrox_male  →  fetch one schema
-  // GET /api/schema                →  fetch all schemas
   if (req.method === 'GET') {
     const { id } = req.query;
     try {
@@ -36,7 +20,6 @@ module.exports = async (req, res) => {
     }
   }
 
-  // POST /api/schema  →  upsert a schema by id
   if (req.method === 'POST') {
     try {
       const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;

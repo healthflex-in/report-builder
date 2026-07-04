@@ -1,17 +1,4 @@
-const { MongoClient } = require('mongodb');
-
-const uri = process.env.MONGO_URI;
-const dbName = process.env.MONGO_DB_NAME || 'stance-dashboard';
-
-let cachedClient = null;
-
-async function connectToDatabase() {
-  if (cachedClient) return cachedClient;
-  const client = new MongoClient(uri);
-  await client.connect();
-  cachedClient = client;
-  return client;
-}
+const { getDb } = require('./_db');
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
@@ -24,20 +11,14 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const client = await connectToDatabase();
-    const db = client.db(dbName);
-    const collection = db.collection('report-data');
-
-    // Find the latest record for this email
-    const doc = await collection.find({ email })
+    const db = await getDb();
+    const doc = await db.collection('report-data')
+      .find({ email })
       .sort({ createdAt: -1 })
       .limit(1)
       .next();
 
-    if (!doc) {
-      return res.status(404).json({ error: 'No report found for this email' });
-    }
-
+    if (!doc) return res.status(404).json({ error: 'No report found for this email' });
     res.status(200).json(doc);
   } catch (error) {
     console.error('MongoDB Load Error:', error);
