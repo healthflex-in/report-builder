@@ -4,12 +4,5 @@
   "outputDirectory": "export/export",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" }
-  ],
-  "git": {
-    "deploymentEnabled": {
-      "main": false,
-      "dev": true,
-      "prod": true
-    }
-  }
+  ]
 }
