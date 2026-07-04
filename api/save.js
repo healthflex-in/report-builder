@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
     const data = JSON.parse(req.body);
     const client = await connectToDatabase();
     const db = client.db(dbName);
-    const collection = db.collection('report-builder');
+    const collection = db.collection('report-data');
 
     // Set creation date in IST
     const createdAt = DateTime.now().setZone('Asia/Kolkata').toString();

@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
   try {
     const client = await connectToDatabase();
     const db = client.db(dbName);
-    const collection = db.collection('report-builder');
+    const collection = db.collection('report-data');
 
     // Find the latest record for this email
     const doc = await collection.find({ email })
