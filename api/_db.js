@@ -7,7 +7,7 @@ let cachedClient = null;
 
 async function getDb() {
   if (cachedClient) return cachedClient.db(dbName);
-  const client = new MongoClient(uri, { maxPoolSize: 10 });
+  const client = new MongoClient(uri);
   await client.connect();
   cachedClient = client;
   return client.db(dbName);
