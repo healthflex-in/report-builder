@@ -14,6 +14,6 @@ module.exports = async (req, res) => {
     res.status(200).json({ success: true, id: result.insertedId });
   } catch (error) {
     console.error('MongoDB Save Error:', error);
-    res.status(500).json({ error: 'Failed to save data' });
+    res.status(500).json({ error: 'Failed to save data', detail: error.message });
   }
 };
