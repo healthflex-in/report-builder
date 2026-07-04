@@ -1,0 +1,47 @@
+header,test_name,category,field,unit,normative_range,notes
+formId,,,,,,one of: hyrox_male
+athlete,,,,,,free text
+gender,,,,,,free text
+date,,,,,,"free text, e.g. DD-MM-YYYY"
+coach,,,,,,free text
+hip_internal_rotation_left,Hip Internal Rotation,MSK Screening - Objective,Left,Degrees,30.0–45.0 Degrees,
+hip_internal_rotation_right,Hip Internal Rotation,MSK Screening - Objective,Right,Degrees,30.0–45.0 Degrees,
+hip_external_rotation_left,Hip External Rotation,MSK Screening - Objective,Left,Degrees,30.0–45.0 Degrees,
+hip_external_rotation_right,Hip External Rotation,MSK Screening - Objective,Right,Degrees,30.0–45.0 Degrees,
+hip_flexor_length_left,Hip Flexor Length,MSK Screening - Objective,Left,Degrees,0.0–5.0 Degrees or lower,
+hip_flexor_length_right,Hip Flexor Length,MSK Screening - Objective,Right,Degrees,0.0–5.0 Degrees or lower,
+rectus_femoris_length_left,Rectus Femoris Length,MSK Screening - Objective,Left,Degrees,60.0–90.0 Degrees,
+rectus_femoris_length_right,Rectus Femoris Length,MSK Screening - Objective,Right,Degrees,60.0–90.0 Degrees,
+df_lunge_left,DF Lunge,MSK Screening - Objective,Left,CM,10.0–14.0 CM,
+df_lunge_right,DF Lunge,MSK Screening - Objective,Right,CM,10.0–14.0 CM,
+cet_overall,CET,MSK Screening - Subjective,Result,,Negative (clear) / Positive (flag),enter 'Negative' or 'Positive'
+slump_test_overall,Slump Test,MSK Screening - Subjective,Result,,Negative (clear) / Positive (flag),enter 'Negative' or 'Positive'
+hip_flexion_left,Hip - Flexion,Force Frame Tests,Left,Newton,250.0–350.0 Newton,
+hip_flexion_right,Hip - Flexion,Force Frame Tests,Right,Newton,250.0–350.0 Newton,
+hip_adduction_left,Hip - Adduction,Force Frame Tests,Left,Newton,300.0–400.0 Newton,
+hip_adduction_right,Hip - Adduction,Force Frame Tests,Right,Newton,300.0–400.0 Newton,
+hip_abduction_left,Hip - Abduction,Force Frame Tests,Left,Newton,300.0–400.0 Newton,
+hip_abduction_right,Hip - Abduction,Force Frame Tests,Right,Newton,300.0–400.0 Newton,
+hip_extension_left,Hip -Extension,Force Frame Tests,Left,Newton,350.0–550.0 Newton,
+hip_extension_right,Hip -Extension,Force Frame Tests,Right,Newton,350.0–550.0 Newton,
+knee_flexion_left,Knee Flexion,Force Frame Tests,Left,Newton,150.0–250.0 Newton,
+knee_flexion_right,Knee Flexion,Force Frame Tests,Right,Newton,150.0–250.0 Newton,
+knee_extension_left,Knee Extension,Force Frame Tests,Left,Newton,250.0–400.0 Newton,
+knee_extension_right,Knee Extension,Force Frame Tests,Right,Newton,250.0–400.0 Newton,
+ham_quads_ratio_left,Ham : Quads Ratio,Force Frame Tests,Left,Ratio,0.6–1.0 Ratio,
+ham_quads_ratio_right,Ham : Quads Ratio,Force Frame Tests,Right,Ratio,0.6–1.0 Ratio,
+plantar_flexion_left,Plantar Flexion,Force Frame Tests,Left,Newton,750.0–1200.0 Newton,
+plantar_flexion_right,Plantar Flexion,Force Frame Tests,Right,Newton,750.0–1200.0 Newton,
+shoulder_ir_left,Shoulder IR,Force Frame Tests,Left,Newton,130.0–250.0 Newton,
+shoulder_ir_right,Shoulder IR,Force Frame Tests,Right,Newton,130.0–250.0 Newton,
+shoulder_er_left,Shoulder ER,Force Frame Tests,Left,Newton,110.0–200.0 Newton,
+shoulder_er_right,Shoulder ER,Force Frame Tests,Right,Newton,110.0–200.0 Newton,
+counter_movement_jumps_overall,Counter Movement Jumps,Force Decks Tests,Result,W/Kg,47.0–63.0 W/Kg,
+imtp_rfd_overall,IMTP_RFD,Force Decks Tests,Result,N/S,1200.0–3200.0 N/S,
+grip_strength_left,Grip Strength,Dynamo,Left,Newton,343–588 Newton,
+grip_strength_right,Grip Strength,Dynamo,Right,Newton,343–588 Newton,
+12_min_run_overall,12 Min Run,Hyrox Simulation Test,Result,Meters,2050.0–2750.0 Meters,
+500_m_ski_erg_overall,500 m Ski Erg,Hyrox Simulation Test,Result,Seconds,135.0–200.0 Seconds,
+1_5_min_wallball_overall,1.5 Min Wallball,Hyrox Simulation Test,Result,Reps,20.0–30.0 Reps,
+1_5_min_burpee_distance_overall,1.5 Min Burpee Distance,Hyrox Simulation Test,Result,Meters,15.0–30.0 Meters,
+1_5_min_lunge_distance_overall,1.5 Min Lunge Distance,Hyrox Simulation Test,Result,Meters,20.0–38.0 Meters,

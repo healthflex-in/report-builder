@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<!-- v1.0.1-fixed-padding -->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./form_library.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="true" />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;background:#E7EADF;color:#111111;font-family:'Montserrat',Arial,sans-serif;font-size:13px;line-height:1.35}
+    input,select,button{font-family:inherit}
+    summary{list-style:none}
+    summary::-webkit-details-marker{display:none}
+    @media print{
+      body{background:#fff}
+      .stance-panel,.stance-toolbar{display:none !important}
+      .stance-app{display:block !important;padding:0 !important}
+      .stance-sheet{box-shadow:none !important;margin:0 auto !important;page-break-after:always}
+    }
+  </style>
+</helmet>
+<div class="stance-app" style="display:grid;grid-template-columns:410px 1fr;gap:18px;align-items:start;padding:18px;max-width:1700px;margin:0 auto">
+
+  <aside class="stance-panel" style="background:#FFFFFF;border:1px solid #DDE2D5;border-radius:24px;box-shadow:0 14px 40px rgba(0,0,0,.08);overflow:hidden;position:sticky;top:18px;max-height:calc(100vh - 36px);display:flex;flex-direction:column">
+
+    <div style="padding:18px;border-bottom:1px solid #DDE2D5;background:#FBFCF7;flex:0 0 auto">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:40px;height:40px;border-radius:12px;background:#111111;display:flex;align-items:center;justify-content:center;flex:0 0 auto;overflow:hidden">
+          <img src="assets/logo-bolt.png" alt="STANCE" style="width:22px;height:auto;display:block" />
+        </div>
+        <div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:22px;letter-spacing:.02em;line-height:1;font-weight:700">STANCE</div>
+          <div style="font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:#697064;font-weight:800;margin-top:4px">Recovery to Performance</div>
+        </div>
+      </div>
+      <div style="margin:14px 0 0;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:600">Assessment Report Builder</div>
+    </div>
+
+    <div ref="{{ scrollContainerRef }}" style="padding:16px;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:12px;scrollbar-gutter:stable">
+
+      <div style="border:1px solid #DDE2D5;border-radius:18px;padding:14px;background:#fff">
+        <h3 style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:600;margin:0 0 10px">Assessment setup</h3>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Form template</label>
+          <select value="{{ formId }}" onChange="{{ onFormChange }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none">
+            <sc-for list="{{ formOptions }}" as="opt" hint-placeholder-count="2">
+              <option value="{{ opt.id }}">{{ opt.name }}</option>
+            </sc-for>
+          </select>
+        </div>
+      </div>
+
+      <div style="border:1px solid #DDE2D5;border-radius:18px;padding:14px;background:#fff">
+        <h3 style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:600;margin:0 0 10px">Athlete details</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Athlete</label>
+            <input value="{{ athlete }}" onChange="{{ onAthlete }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Gender</label>
+            <input value="{{ gender }}" onChange="{{ onGender }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Date</label>
+            <input value="{{ date }}" onChange="{{ onDate }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Coach</label>
+            <input value="{{ coach }}" onChange="{{ onCoach }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Phone</label>
+            <input value="{{ phone }}" onChange="{{ onPhone }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Email</label>
+            <input value="{{ email }}" onChange="{{ onEmail }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
+          </div>
+        </div>
+      </div>
+
+      <sc-for list="{{ formSegments }}" as="seg" hint-placeholder-count="4">
+        <details ref="{{ seg.detailsRef }}" open="{{ seg.expanded }}" style="border:1px solid #DDE2D5;border-radius:18px;overflow:hidden;background:#fff;flex:0 0 auto">
+          <summary onClick="{{ seg.onToggleClick }}" style="cursor:pointer;background:#F5F7EF;padding:12px 14px;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center;list-style:none">
+            <span>{{ seg.title }}</span>
+            <span style="font-family:'Montserrat',sans-serif;font-weight:700;color:#697064">{{ seg.count }} tests</span>
+          </summary>
+          <div style="padding:12px;display:flex;flex-direction:column">
+            <sc-for list="{{ seg.tests }}" as="t" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:34px 1fr;gap:10px;border-bottom:1px solid #EDF0E7;padding:11px 0">
+                <div style="width:32px;height:32px;border-radius:10px;background:#ECFF99;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:8px;font-weight:700;flex:0 0 auto">{{ t.icon }}</div>
+                <div style="min-width:0">
+                  <div style="font-weight:800;font-size:12px;display:flex;align-items:center;gap:6px">
+                    <span>{{ t.name }}</span>
+                    <span title="{{ t.explanation }}" style="width:16px;height:16px;border-radius:50%;background:#111111;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;line-height:1;flex:0 0 auto;cursor:help">i</span>
+                  </div>
+                  <div style="font-size:10px;color:#697064;margin-top:2px">Target: {{ t.normTextStr }} • Weight: {{ t.weight }}</div>
+
+                  <sc-if value="{{ t.isBilateral }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
+                      <div>
+                        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Left</div>
+                        <input type="number" step="any" value="{{ t.leftVal }}" onChange="{{ t.onLeft }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%" />
+                      </div>
+                      <div>
+                        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Right</div>
+                        <input type="number" step="any" value="{{ t.rightVal }}" onChange="{{ t.onRight }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%" />
+                      </div>
+                      <div>
+                        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Unit</div>
+                        <input disabled="{{ true }}" value="{{ t.unit }}" style="border:1px solid #DDE2D5;background:#F1F3EC;border-radius:10px;padding:8px;font-size:12px;width:100%;color:#697064" />
+                      </div>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ t.isSelectType }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px;max-width:220px">
+                      <div>
+                        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Result</div>
+                        <select value="{{ t.overallVal }}" onChange="{{ t.onOverallSelect }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%">
+                          <option>Negative</option>
+                          <option>Positive</option>
+                        </select>
+                      </div>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ t.isNumberType }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+                      <div>
+                        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Result</div>
+                        <input type="number" step="any" value="{{ t.overallVal }}" onChange="{{ t.onOverallNumber }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%" />
+                      </div>
+                      <div>
+                        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Unit</div>
+                        <input disabled="{{ true }}" value="{{ t.unit }}" style="border:1px solid #DDE2D5;background:#F1F3EC;border-radius:10px;padding:8px;font-size:12px;width:100%;color:#697064" />
+                      </div>
+                    </div>
+                  </sc-if>
+
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </details>
+      </sc-for>
+
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 16px;border-top:1px solid #DDE2D5;background:#FBFCF7;flex:0 0 auto">
+      <button onClick="{{ updateReport }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#C8FF00;color:#111111">Update report</button>
+      <button onClick="{{ doPrint }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#111111;color:#fff">Create PDF</button>
+      <button onClick="{{ saveLocal }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#EEF1E8;color:#111111">Save local</button>
+      <button onClick="{{ loadLocal }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#EEF1E8;color:#111111">Load local</button>
+      <button onClick="{{ saveToCloud }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#222;color:#C8FF00">Save to Cloud</button>
+      <button onClick="{{ loadFromCloud }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#222;color:#C8FF00">Load from Cloud</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="stance-toolbar" style="display:flex;justify-content:space-between;align-items:center;margin:0 auto 12px;width:210mm;max-width:100%;color:#697064;font-size:11px">
+      <b style="font-family:'Unbounded',sans-serif;color:#111111;font-size:12px;font-weight:600">Live report preview</b>
+      <span>Print uses a 2-page optimized layout.</span>
+    </div>
+
+    <section class="stance-sheet" data-screen-label="Page 1 — Summary" style="width:210mm;height:297mm;margin:0 auto 18px;background:#F7F8F2;box-shadow:0 22px 70px rgba(0,0,0,.16);position:relative;overflow:hidden;padding:10mm 15mm;display:flex;flex-direction:column">
+      <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(17,17,17,.032) 1px,transparent 1px),linear-gradient(90deg,rgba(17,17,17,.032) 1px,transparent 1px);background-size:20px 20px;pointer-events:none"></div>
+
+      <div style="position:relative;z-index:1;display:flex;flex-direction:column;flex:1 1 auto;min-height:0">
+
+        <header style="display:flex;align-items:flex-start;justify-content:space-between;border-bottom:2px solid #111111;padding-bottom:12px;margin-bottom:16px;gap:16px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:40px;height:40px;border-radius:12px;background:#111111;display:flex;align-items:center;justify-content:center;flex:0 0 auto;overflow:hidden">
+              <img src="assets/logo-bolt.png" alt="STANCE" style="width:22px;height:auto;display:block" />
+            </div>
+            <div>
+              <div style="font-family:'Unbounded',sans-serif;font-size:22px;letter-spacing:.02em;line-height:1;font-weight:700">STANCE</div>
+              <div style="font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:#697064;font-weight:800;margin-top:4px">Recovery to Performance</div>
+            </div>
+          </div>
+          <div style="text-align:right;text-transform:uppercase;letter-spacing:.12em;font-size:9px;color:#697064;font-weight:800;flex:0 0 auto">
+            Performance diagnostics
+            <b style="display:block;font-family:'Unbounded',sans-serif;font-size:15px;color:#111111;letter-spacing:.02em;margin-top:4px;font-weight:600">HYROX Readiness Report</b>
+          </div>
+        </header>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+          <div style="background:#fff;border:1px solid #DDE2D5;border-radius:13px;padding:9px 11px">
+            <small style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#697064;font-size:7.5px;font-weight:800;margin-bottom:3px">Athlete</small>
+            <b style="font-size:12px">{{ athlete }}</b>
+          </div>
+          <div style="background:#fff;border:1px solid #DDE2D5;border-radius:13px;padding:9px 11px">
+            <small style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#697064;font-size:7.5px;font-weight:800;margin-bottom:3px">Gender</small>
+            <b style="font-size:12px">{{ gender }}</b>
+          </div>
+          <div style="background:#fff;border:1px solid #DDE2D5;border-radius:13px;padding:9px 11px">
+            <small style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#697064;font-size:7.5px;font-weight:800;margin-bottom:3px">Date</small>
+            <b style="font-size:12px">{{ date }}</b>
+          </div>
+          <div style="background:#fff;border:1px solid #DDE2D5;border-radius:13px;padding:9px 11px">
+            <small style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#697064;font-size:7.5px;font-weight:800;margin-bottom:3px">Coach</small>
+            <b style="font-size:12px">{{ coach }}</b>
+          </div>
+        </div>
+
+        <section style="display:grid;grid-template-columns:210px 1fr;gap:20px;background:#111111;color:#fff;border-radius:22px;padding:17px 20px;margin-bottom:14px;position:relative;overflow:hidden">
+          <div style="position:absolute;right:-8px;bottom:-22px;font-family:'Unbounded',sans-serif;font-size:74px;font-weight:700;color:rgba(255,255,255,.045);pointer-events:none">HYROX</div>
+          <div style="display:flex;align-items:center;gap:14px;position:relative;z-index:1">
+            <svg viewBox="0 0 100 100" style="width:92px;height:92px;flex:0 0 auto">
+              <circle cx="50" cy="50" r="44" style="stroke:rgba(255,255,255,.17);stroke-width:12;fill:none"></circle>
+              <circle cx="50" cy="50" r="44" fill="none" stroke-width="12" stroke-linecap="round" stroke="{{ overallBg }}" stroke-dasharray="{{ dashArray }}" stroke-dashoffset="{{ dashOffset }}" style="transform:rotate(-90deg);transform-origin:50px 50px"></circle>
+            </svg>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <div style="font-family:'Unbounded',sans-serif;font-size:38px;line-height:.9;font-weight:700;color:{{ overallBg }}">{{ overallRound }}<small style="font-size:13px;color:#fff;font-family:'Montserrat',sans-serif;font-weight:600">/100</small></div>
+              <span style="display:inline-block;width:fit-content;border-radius:999px;padding:4px 9px;font-size:8px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;white-space:nowrap;background:{{ overallBg }};color:{{ overallFg }}">{{ overallLabel }}</span>
+            </div>
+          </div>
+          <div style="position:relative;z-index:1;min-width:0">
+            <span style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#bbb;font-size:9px;font-weight:800;margin-bottom:5px">Overall readiness</span>
+            <h1 style="font-family:'Unbounded',sans-serif;font-size:18px;line-height:1.2;margin:0 0 8px;font-weight:600">{{ overallHeadline }}</h1>
+            <p style="margin:0;color:#E6E6E6;font-size:10.5px;max-width:520px;line-height:1.5">This report converts mobility, strength, force-platform, grip and HYROX simulation tests into a concise readiness profile.</p>
+            <div style="margin-top:14px">
+              <div style="display:flex;justify-content:space-between;font-size:8px;text-transform:uppercase;letter-spacing:.11em;color:#bbb;font-weight:800;margin-bottom:5px"><span>Build</span><span>Develop</span><span>Ready</span></div>
+              <div style="height:9px;border-radius:99px;background:linear-gradient(90deg,#E84A4A,#FFB020,#C8FF00);position:relative">
+                <span style="position:absolute;top:-5px;width:3px;height:19px;background:#fff;border-radius:3px;transform:translateX(-50%);left:{{ scaleMarkerLeft }}%"></span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin:0 0 8px">
+          <h2 style="font-family:'Unbounded',sans-serif;font-size:13px;margin:0;font-weight:600">Readiness map</h2>
+        </div>
+
+        <div style="background:#fff;border:1px solid #DDE2D5;border-radius:18px;padding:14px;display:grid;grid-template-columns:310px 1fr;gap:14px;align-items:center">
+          <div style="position:relative;width:100%">
+            <svg viewBox="0 0 210 195" style="width:100%;height:auto;display:block">
+              <sc-for list="{{ radar.gridPolys }}" as="poly" hint-placeholder-count="4">
+                <polygon points="{{ poly }}" style="fill:none;stroke:#d5dbc9;stroke-width:1"></polygon>
+              </sc-for>
+              <sc-for list="{{ radar.axisLines }}" as="ax" hint-placeholder-count="4">
+                <line x1="{{ ax.x1 }}" y1="{{ ax.y1 }}" x2="{{ ax.x2 }}" y2="{{ ax.y2 }}" style="stroke:#d5dbc9;stroke-width:1"></line>
+              </sc-for>
+              <polygon points="{{ radar.valuePolygonPoints }}" style="fill:rgba(200,255,0,.38);stroke:#111111;stroke-width:2"></polygon>
+              <sc-for list="{{ radar.dots }}" as="d" hint-placeholder-count="4">
+                <circle cx="{{ d.cx }}" cy="{{ d.cy }}" r="3" style="fill:#111111"></circle>
+              </sc-for>
+            </svg>
+            <sc-for list="{{ radar.dots }}" as="d" hint-placeholder-count="4">
+              <div style="position:absolute;left:{{ d.leftPct }}%;top:{{ d.topPct }}%;transform:translate(-50%,-165%);font-size:9px;font-family:'Montserrat',sans-serif;font-weight:700;color:#697064;white-space:nowrap;pointer-events:none">{{ d.text }}</div>
+            </sc-for>
+            <sc-for list="{{ radar.labelPoints }}" as="lp" hint-placeholder-count="4">
+              <div style="position:absolute;left:{{ lp.leftPct }}%;top:{{ lp.topPct }}%;transform:translate(-50%,-50%);font-size:10px;font-family:'Montserrat',sans-serif;font-weight:800;color:#111111;white-space:nowrap;pointer-events:none">{{ lp.text }}</div>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
+            <sc-for list="{{ segs }}" as="s" hint-placeholder-count="4">
+              <div style="background:#F5F7EF;border:1px solid #DDE2D5;border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:4px">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <div style="width:24px;height:24px;border-radius:7px;background:#ECFF99;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:7.5px;font-weight:700">{{ s.abbr }}</div>
+                  <span style="display:inline-block;border-radius:999px;padding:3px 6px;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;white-space:nowrap;background:{{ s.pillBg }};color:{{ s.pillFg }}">{{ s.statusLabel }}</span>
+                </div>
+                <h3 style="font-family:'Unbounded',sans-serif;font-size:8px;margin:0;font-weight:600;line-height:1.3;color:#697064">{{ s.title }}</h3>
+                <div style="display:flex;align-items:baseline;gap:3px">
+                  <b style="font-family:'Unbounded',sans-serif;font-size:18px;font-weight:700">{{ s.scoreDisplay }}</b>
+                  <span style="font-size:8.5px;color:#697064">/100</span>
+                </div>
+                <div style="height:5px;background:#E8ECD7;border-radius:99px;overflow:hidden">
+                  <span style="display:block;height:100%;background:#C8FF00;border-radius:99px;width:{{ s.score }}%"></span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin:14px 0 8px">
+          <h2 style="font-family:'Unbounded',sans-serif;font-size:13px;margin:0;font-weight:600">Key constraints</h2>
+          <p style="font-size:10px;color:#697064;margin:0">Lowest scoring tests + asymmetry watchlist</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.05fr .95fr;gap:10px;flex:1 1 auto;min-height:0">
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <sc-for list="{{ constraints }}" as="c" hint-placeholder-count="5">
+              <div style="display:grid;grid-template-columns:20px 30px 1fr auto;gap:8px;align-items:center;background:#fff;border:1px solid #DDE2D5;border-radius:14px;padding:8px 10px">
+                <div style="font-family:'Unbounded',sans-serif;font-size:14px;color:#697064;font-weight:700">{{ c.rank }}</div>
+                <div style="width:30px;height:30px;border-radius:9px;background:#ECFF99;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:8px;font-weight:700">{{ c.icon }}</div>
+                <div style="min-width:0">
+                  <b style="font-size:11px;display:block">{{ c.name }}</b>
+                  <small style="display:block;font-size:8.7px;color:#697064;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.explanation }}</small>
+                </div>
+                <span style="display:inline-block;border-radius:999px;padding:5px 9px;font-size:8px;text-transform:uppercase;letter-spacing:.06em;font-weight:800;white-space:nowrap;background:{{ c.pillBg }};color:{{ c.pillFg }}">{{ c.scoreRound }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="background:#fff;border:1px solid #DDE2D5;border-radius:18px;padding:12px">
+              <span style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#697064;font-size:7.5px;font-weight:800;margin-bottom:6px">Asymmetry watchlist</span>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <sc-if value="{{ hasAsym }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ asymList }}" as="a" hint-placeholder-count="2">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid #EDF0E7;padding-bottom:7px">
+                      <b style="font-size:10px">{{ a.name }}</b>
+                      <strong style="color:#A31616;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;flex:0 0 auto">{{ a.asymText }}</strong>
+                    </div>
+                  </sc-for>
+                </sc-if>
+                <sc-if value="{{ noAsym }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                    <b style="font-size:10px">No major asymmetry flags</b>
+                    <strong style="color:#111111;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;flex:0 0 auto">Clear</strong>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #DDE2D5;border-radius:18px;padding:12px">
+              <span style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#697064;font-size:7.5px;font-weight:800;margin-bottom:6px">Next training focus</span>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ focusList }}" as="f" hint-placeholder-count="3">
+                  <div style="border-left:4px solid #C8FF00;padding-left:9px">
+                    <b style="font-size:10.5px;display:block">{{ f.name }}</b>
+                    <p style="margin:2px 0 0;font-size:8.8px;color:#697064">Targeted progression and retest in 3–4 weeks.</p>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="position:relative;z-index:1;border-top:1px solid #DDE2D5;padding-top:8px;margin-top:12px;display:flex;justify-content:space-between;color:#697064;font-size:8px">
+        <span>STANCE Health • Athlete-facing summary</span>
+        <span>Page 1</span>
+      </div>
+    </section>
+
+    <sc-for list="{{ segPages }}" as="p" hint-placeholder-count="2">
+      <section class="stance-sheet" data-screen-label="Page {{ p.label }}" style="width:210mm;height:297mm;margin:0 auto 18px;background:#F7F8F2;box-shadow:0 22px 70px rgba(0,0,0,.16);position:relative;overflow:hidden;padding:13mm 15mm;display:flex;flex-direction:column">
+        <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(17,17,17,.032) 1px,transparent 1px),linear-gradient(90deg,rgba(17,17,17,.032) 1px,transparent 1px);background-size:20px 20px;pointer-events:none"></div>
+
+        <div style="position:relative;z-index:1;display:flex;flex-direction:column;flex:1 1 auto;min-height:0;gap:8px">
+
+          <header style="display:flex;align-items:flex-start;justify-content:space-between;border-bottom:2px solid #111111;padding-bottom:8px;margin-bottom:10px;gap:16px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:40px;height:40px;border-radius:12px;background:#111111;display:flex;align-items:center;justify-content:center;flex:0 0 auto;overflow:hidden">
+                <img src="assets/logo-bolt.png" alt="STANCE" style="width:22px;height:auto;display:block" />
+              </div>
+              <div>
+                <div style="font-family:'Unbounded',sans-serif;font-size:22px;letter-spacing:.02em;line-height:1;font-weight:700">STANCE</div>
+                <div style="font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:#697064;font-weight:800;margin-top:4px">Recovery to Performance</div>
+              </div>
+            </div>
+            <div style="text-align:right;text-transform:uppercase;letter-spacing:.12em;font-size:9px;color:#697064;font-weight:800;flex:0 0 auto">
+              Coach / clinician appendix
+              <b style="display:block;font-family:'Unbounded',sans-serif;font-size:15px;color:#111111;letter-spacing:.02em;margin-top:4px;font-weight:600">Segment Readiness + Test Tiles</b>
+            </div>
+          </header>
+
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;margin:4px 0 6px">
+            <h2 style="font-family:'Unbounded',sans-serif;font-size:13px;margin:0;font-weight:600">Segment readiness</h2>
+          </div>
+
+          <sc-for list="{{ p.segBlocks }}" as="seg" hint-placeholder-count="2">
+            <section style="margin-bottom:6px;display:flex;flex-direction:column;gap:8px">
+              <sc-if value="{{ seg.showHeader }}" hint-placeholder-val="{{ true }}">
+                <div style="display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:stretch">
+                  <div style="background:#111111;color:#fff;border-radius:16px;padding:11px;display:flex;flex-direction:column;justify-content:center;gap:2px">
+                    <span style="text-transform:uppercase;letter-spacing:.12em;color:#bbb;font-size:7.5px;font-weight:800">{{ seg.abbr }} segment</span>
+                    <div style="font-family:'Unbounded',sans-serif;font-size:30px;line-height:1;color:#C8FF00;font-weight:700">{{ seg.scoreDisplay }}</div>
+                    <small style="color:#cfcfcf;font-size:9px">{{ seg.statusLower }} readiness</small>
+                  </div>
+                  <div style="background:#fff;border:1px solid #DDE2D5;border-radius:16px;padding:11px;display:flex;flex-direction:column;justify-content:center;gap:3px">
+                    <h3 style="font-family:'Unbounded',sans-serif;font-size:12px;margin:0;font-weight:600">{{ seg.title }}</h3>
+                    <p style="margin:0;font-size:9px;color:#697064;line-height:1.4">{{ seg.summary }}</p>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ seg.isContinuation }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#F5F7EF;border-radius:10px;border-left:4px solid #C8FF00">
+                  <span style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:600;color:#111111">{{ seg.title }}</span>
+                  <span style="font-size:9px;color:#697064;font-weight:600">— continued</span>
+                </div>
+              </sc-if>
+
+              <div style="display:grid;grid-template-columns:{{ tileColumns }};gap:7px">
+                <sc-for list="{{ seg.tiles }}" as="t" hint-placeholder-count="4">
+                  <article style="background:#fff;border:1px solid #DDE2D5;border-radius:14px;padding:9px;display:flex;flex-direction:column;gap:6px">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                      <div style="display:flex;gap:7px;align-items:flex-start;min-width:0">
+                        <div style="width:24px;height:24px;border-radius:8px;background:#ECFF99;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:7px;font-weight:700;flex:0 0 auto">{{ t.icon }}</div>
+                        <div style="min-width:0">
+                          <b style="font-size:9.5px;line-height:1.2;display:block">{{ t.name }}</b>
+                          <small style="display:block;font-size:7px;color:#697064;text-transform:uppercase;letter-spacing:.06em;font-weight:800;margin-top:2px">{{ t.category }}</small>
+                        </div>
+                      </div>
+                      <span style="display:inline-block;border-radius:999px;padding:3px 6px;font-size:7px;text-transform:uppercase;letter-spacing:.05em;font-weight:800;white-space:nowrap;background:{{ t.pillBg }};color:{{ t.pillFg }};flex:0 0 auto">{{ t.statusLabel }}</span>
+                    </div>
+                    <div style="display:flex;align-items:baseline;gap:6px">
+                      <div style="font-family:'Unbounded',sans-serif;font-size:21px;line-height:.9;font-weight:700">{{ t.scoreDisplay }}</div>
+                      <small style="font-size:7.5px;color:#697064;font-weight:700">/100</small>
+                    </div>
+
+                    <sc-if value="{{ t.showMessage }}" hint-placeholder-val="{{ false }}">
+                      <p style="margin:0;font-size:7.6px;color:#697064;line-height:1.3">{{ t.message }}</p>
+                    </sc-if>
+
+                    <div>
+                      <div style="display:flex;justify-content:space-between;font-size:6.8px;color:#697064;margin-bottom:3px">
+                        <span style="text-transform:uppercase;letter-spacing:.1em;font-weight:800">{{ t.norm.leftLabel }}</span>
+                        <span style="text-transform:uppercase;letter-spacing:.1em;font-weight:800">{{ t.norm.midLabel }}</span>
+                        <span style="text-transform:uppercase;letter-spacing:.1em;font-weight:800">{{ t.norm.rightLabel }}</span>
+                      </div>
+                      <div style="position:relative;height:6px;border-radius:99px;background:#E8ECD7">
+                        <span style="position:absolute;top:0;height:100%;border-radius:99px;background:linear-gradient(90deg,#fff2bb,#ddff77);left:{{ t.norm.bandLeft }}%;width:{{ t.norm.bandWidth }}%"></span>
+                        <sc-if value="{{ t.norm.hasMarker }}" hint-placeholder-val="{{ true }}">
+                          <span style="position:absolute;top:-3px;width:2px;height:12px;border-radius:3px;transform:translateX(-50%);left:{{ t.norm.markerLeft }}%;background:{{ t.norm.markerColor }}"></span>
+                        </sc-if>
+                      </div>
+                    </div>
+
+                    <div style="display:flex;gap:4px;flex-wrap:wrap">
+                      <span style="background:#F1F3EC;border-radius:99px;padding:3px 6px;font-size:6.8px;color:#697064;font-weight:800">{{ t.resultText }}</span>
+                      <sc-if value="{{ t.hasAsym }}" hint-placeholder-val="{{ false }}">
+                        <span style="background:#F1F3EC;border-radius:99px;padding:3px 6px;font-size:6.8px;color:#697064;font-weight:800">{{ t.asymText }}</span>
+                      </sc-if>
+                    </div>
+                  </article>
+                </sc-for>
+              </div>
+            </section>
+          </sc-for>
+        </div>
+
+        <div style="position:relative;z-index:1;border-top:1px solid #DDE2D5;padding-top:8px;margin-top:6px;display:flex;justify-content:space-between;color:#697064;font-size:8px">
+          <span>STANCE Health • Segment detail and test explanations</span>
+          <span>Page {{ p.pageNum }}</span>
+        </div>
+      </section>
+    </sc-for>
+
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1700,&quot;height&quot;:1200},&quot;tileColumns&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;3&quot;,&quot;options&quot;:[&quot;3&quot;,&quot;4&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Report tiles&quot;},&quot;showTileMessage&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Report tiles&quot;},&quot;asymmetryThreshold&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:14,&quot;min&quot;:5,&quot;max&quot;:25,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Scoring&quot;},&quot;segmentsExpanded&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Form builder&quot;}}">
+const FORM_LIBRARY = window.FORM_LIBRARY;
+
+const STATUS_COLORS = {
+  good: {bg:'#C8FF00', fg:'#111111', label:'READY'},
+  ok:   {bg:'#DFFB93', fg:'#111111', label:'DEVELOP'},
+  warn: {bg:'#FFE3A3', fg:'#111111', label:'BUILD'},
+  bad:  {bg:'#FFE0E0', fg:'#A31616', label:'PRIORITY'},
+  pending: {bg:'#EEF1E8', fg:'#697064', label:'NOT ASSESSED'}
+};
+
+function statusKey(score){ if(score>=85) return 'good'; if(score>=70) return 'ok'; if(score>=50) return 'warn'; return 'bad'; }
+function isLowerBetter(t){ return String(t.unit).toLowerCase().includes('second') || (Number(t.max) < Number(t.min)); }
+function valueScore(v,min,max,lowerBetter){
+  v=Number(v); min=Number(min); max=Number(max);
+  if(!Number.isFinite(v)||!Number.isFinite(min)||!Number.isFinite(max)) return null;
+  if(lowerBetter){
+    let low=Math.min(min,max), high=Math.max(min,max);
+    if(v<=low) return 100;
+    if(v<=high) return 70 + (high-v)/(high-low)*30;
+    return Math.max(30,70 - ((v-high)/(Math.abs(high)||1))*40);
+  } else {
+    if(v>=max) return 100;
+    if(v>=min) return 70 + (v-min)/(max-min)*30;
+    return Math.max(30,70 - ((min-v)/(Math.abs(min)||1))*40);
+  }
+}
+function shortFmt(v){ if(v===null||v===undefined||v==='') return '—'; let n=Number(v); return Number.isFinite(n)?(Math.abs(n-Math.round(n))<.05?String(Math.round(n)):n.toFixed(1)):String(v); }
+function fmt(v, unit){ unit = unit||''; if(v===null||v===undefined||v==='') return '—'; let n=Number(v); let s=Number.isFinite(n)?(Math.abs(n-Math.round(n))<.05?String(Math.round(n)):n.toFixed(1)):String(v); return (s+(unit?' '+unit:'')); }
+function normText(t){ if(t.min===null&&t.max===null) return 'Negative / clear'; if(isLowerBetter(t)) return `${shortFmt(Math.min(t.min,t.max))}–${shortFmt(Math.max(t.min,t.max))} ${t.unit||''} or lower`; return `${shortFmt(t.min)}–${shortFmt(t.max)} ${t.unit||''}`; }
+
+function initValues(form){
+  const values = {};
+  form.tests.forEach(t=>{
+    const type = t.type||'';
+    if(type.includes('Bilateral')){
+      values[t.id+'_left'] = t.left ?? '';
+      values[t.id+'_right'] = t.right ?? '';
+    } else if(t.min===null && t.max===null){
+      values[t.id+'_overall'] = t.overall ?? 'Negative';
+    } else {
+      values[t.id+'_overall'] = t.overall ?? '';
+    }
+  });
+  return values;
+}
+function getVal(values, id){
+  if(!(id in values)) return null;
+  const v = values[id];
+  if(v===''||v===null||v===undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : v;
+}
+function calcTest(t, values, asymThreshold){
+  const type = t.type || '';
+  const lower = isLowerBetter(t);
+  const left = getVal(values, t.id+'_left');
+  const right = getVal(values, t.id+'_right');
+  const overallRaw = values[t.id+'_overall'];
+  const overall = getVal(values, t.id+'_overall');
+  let result=null, sc=null, asym=null, filled=false;
+  if(type.includes('Bilateral')){
+    // Only treat a side as entered when a value was actually typed — an empty
+    // field must never be coerced to 0, or it silently scores as a real measurement.
+    const leftEntered = left!==null && Number.isFinite(Number(left));
+    const rightEntered = right!==null && Number.isFinite(Number(right));
+    filled = leftEntered || rightEntered;
+    const ls = leftEntered ? valueScore(left, t.min, t.max, lower) : null;
+    const rs = rightEntered ? valueScore(right, t.min, t.max, lower) : null;
+    if(leftEntered && rightEntered){
+      result = (Number(left)+Number(right))/2;
+      const mx = Math.max(Math.abs(Number(left)), Math.abs(Number(right)));
+      asym = mx ? Math.abs(Number(left)-Number(right))/mx*100 : null;
+    } else if(leftEntered){ result = Number(left); } else if(rightEntered){ result = Number(right); }
+    const vals = [ls,rs].filter(x=>x!==null);
+    sc = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    if(type.includes('with Asym') && asym!==null && asym>asymThreshold && sc!==null){
+      sc = Math.max(30, sc * Math.max(.35, 1-((asym-asymThreshold)/100*3.2)));
+    }
+  } else if(t.min===null && t.max===null){
+    const chosen = overallRaw || t.overall || null;
+    filled = !!chosen;
+    result = chosen || '—';
+    sc = filled ? ((String(result).toLowerCase()==='negative') ? 100 : 30) : null;
+  } else {
+    const entered = overall!==null && Number.isFinite(Number(overall));
+    filled = entered;
+    result = entered ? overall : null;
+    sc = entered ? valueScore(overall, t.min, t.max, lower) : null;
+  }
+  const hasScore = sc!==null && Number.isFinite(sc);
+  sc = hasScore ? Math.max(0, Math.min(100, sc)) : null;
+  return {...t, left, right, overall: (overall ?? result), result, score: sc, asym, filled: filled && hasScore};
+}
+function normBarData(t){
+  if(!t.filled){
+    // No data entered yet — show the band with no position marker rather than
+    // guessing a location from a coerced-to-zero value.
+    if(t.min===null && t.max===null) return { leftLabel:'Positive', midLabel:'Screen', rightLabel:'Negative', bandLeft:55, bandWidth:40, hasMarker:false, markerLeft:0, markerColor:'#B7BEAC' };
+    const min0 = Number(t.min), max0 = Number(t.max);
+    const low0 = Math.min(min0,max0), high0 = Math.max(min0,max0), span0=(high0-low0)||1;
+    const extMin0 = Math.max(0, low0-span0*.35), extMax0 = high0+span0*.35;
+    return { leftLabel: shortFmt(low0), rightLabel: shortFmt(high0), midLabel:'Normative range', bandLeft:(low0-extMin0)/(extMax0-extMin0)*100, bandWidth:(high0-low0)/(extMax0-extMin0)*100, hasMarker:false, markerLeft:0, markerColor:'#B7BEAC' };
+  }
+  if(t.min===null && t.max===null){
+    const bad = t.score<70;
+    return { leftLabel:'Positive', midLabel:'Screen', rightLabel:'Negative', bandLeft:55, bandWidth:40, hasMarker:true, markerLeft: t.score>=70?82:18, markerColor: bad?'#E84A4A':'#111111' };
+  }
+  let v = Number(t.result);
+  if(!Number.isFinite(v)) v = Number(t.overall)||0;
+  const min = Number(t.min), max = Number(t.max);
+  const low = Math.min(min,max), high = Math.max(min,max), span = (high-low)||1;
+  const extMin = Math.max(0, low-span*.35), extMax = high+span*.35;
+  let pos = (v-extMin)/(extMax-extMin)*100;
+  const start = (low-extMin)/(extMax-extMin)*100;
+  const width = (high-low)/(extMax-extMin)*100;
+  pos = Math.max(0, Math.min(100, pos));
+  const bad = t.score<70;
+  return { leftLabel: shortFmt(low), rightLabel: shortFmt(high), midLabel:'Normative range', bandLeft:start, bandWidth:width, hasMarker:true, markerLeft:pos, markerColor: bad?'#E84A4A':'#111111' };
+}
+function radarGeometry(labels, values){
+  const VBW=210, VBH=195;
+  const cx=105, cy=96, r=70, n=labels.length || 1;
+  const pt = (i,scale)=>{ const a=-Math.PI/2+2*Math.PI*i/n; return {x:+(cx+r*scale*Math.cos(a)).toFixed(1), y:+(cy+r*scale*Math.sin(a)).toFixed(1)}; };
+  const polyStr = (scale)=> Array.from({length:n},(_,i)=>{const p=pt(i,scale); return `${p.x},${p.y}`;}).join(' ');
+  const axisLines = Array.from({length:n},(_,i)=>{const p=pt(i,1); return {x1:cx,y1:cy,x2:p.x,y2:p.y};});
+  const labelPoints = labels.map((lab,i)=>{ const a=-Math.PI/2+2*Math.PI*i/n; const x=cx+(r+18)*Math.cos(a), y=cy+(r+18)*Math.sin(a); return {leftPct:+(x/VBW*100).toFixed(2), topPct:+(y/VBH*100).toFixed(2), text:lab}; });
+  const valuePolygonPoints = values.map((v,i)=>{ const scale=Math.max(0,Math.min(100,v))/100; const p=pt(i,scale); return `${p.x},${p.y}`; }).join(' ');
+  const dots = values.map((v,i)=>{ const scale=Math.max(0,Math.min(100,v))/100; const p=pt(i,scale); return {cx:p.x, cy:p.y, leftPct:+(p.x/VBW*100).toFixed(2), topPct:+(p.y/VBH*100).toFixed(2), text: Math.round(v)}; });
+  return { gridPolys:[polyStr(.25),polyStr(.5),polyStr(.75),polyStr(1)], axisLines, labelPoints, valuePolygonPoints, dots };
+}
+
+class Component extends DCLogic {
+  state = {
+    formId: 'hyrox_male',
+    athlete: 'Sarfraz Nawaz',
+    gender: 'Male',
+    date: '02-01-2025',
+    coach: 'Shubh',
+    email: '',
+    phone: '',
+    values: initValues(FORM_LIBRARY.hyrox_male),
+    openSegmentId: null,
+    openSegmentInitialized: false
+  };
+
+  segmentEls = {};
+  scrollEl = null;
+
+  setField(key, val){ this.setState({ [key]: val }); }
+  setValue(id, val){ this.setState(s => ({ values: { ...s.values, [id]: val } })); }
+  changeForm(id){ this.setState({ formId: id, values: initValues(FORM_LIBRARY[id]), openSegmentId: null, openSegmentInitialized: false }); }
+
+  toggleSegment(segId, willOpen){
+    this.setState({ openSegmentId: willOpen ? segId : null, openSegmentInitialized: true });
+    if(!willOpen) return;
+    // Align the opened section's header near the top of the independently-scrolling
+    // panel so its full test list is visible without other open sections crowding it.
+    setTimeout(() => {
+      const el = this.segmentEls[segId];
+      const scrollEl = this.scrollEl;
+      if(el && scrollEl){
+        const elTop = el.getBoundingClientRect().top;
+        const boxTop = scrollEl.getBoundingClientRect().top;
+        const target = scrollEl.scrollTop + (elTop - boxTop) - 4;
+        scrollEl.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+      }
+    }, 60);
+  }
+  doPrint(){ window.print(); }
+  async saveToCloud(){
+    const data = {
+      formId: this.state.formId,
+      athlete: this.state.athlete,
+      gender: this.state.gender,
+      date: this.state.date,
+      coach: this.state.coach,
+      email: this.state.email,
+      phone: this.state.phone,
+      values: this.state.values
+    };
+    try {
+      const res = await fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      if(result.success) alert('Saved to MongoDB cloud!');
+      else alert('Error: ' + (result.error || 'Failed to save'));
+    } catch(e) {
+      alert('Network error: ' + e.message);
+    }
+  }
+  async loadFromCloud(){
+    const email = prompt('Enter athlete email to load:', this.state.email);
+    if(!email) return;
+    try {
+      const res = await fetch('/api/load?email=' + encodeURIComponent(email));
+      if(!res.ok) {
+        const err = await res.json();
+        alert('Error: ' + (err.error || 'Not found'));
+        return;
+      }
+      const data = await res.json();
+      this.setState({
+        formId: data.formId || this.state.formId,
+        athlete: data.athlete ?? this.state.athlete,
+        gender: data.gender ?? this.state.gender,
+        date: data.date ?? this.state.date,
+        coach: data.coach ?? this.state.coach,
+        email: data.email ?? this.state.email,
+        phone: data.phone ?? this.state.phone,
+        values: data.values || {}
+      });
+      alert('Data loaded from cloud!');
+    } catch(e) {
+      alert('Network error: ' + e.message);
+    }
+  }
+  saveLocal(){
+    const data = { form: this.state.formId, athlete: this.state.athlete, gender: this.state.gender, date: this.state.date, coach: this.state.coach, values: this.state.values };
+    localStorage.setItem('stance_assessment_builder', JSON.stringify(data));
+    alert('Saved locally in this browser.');
+  }
+  loadLocal(){
+    const raw = localStorage.getItem('stance_assessment_builder');
+    if(!raw){ alert('No local save found.'); return; }
+    const data = JSON.parse(raw);
+    this.setState({ formId: data.form || this.state.formId, athlete: data.athlete ?? this.state.athlete, gender: data.gender ?? this.state.gender, date: data.date ?? this.state.date, coach: data.coach ?? this.state.coach, values: data.values || {} });
+  }
+
+  renderVals(){
+    const formId = this.state.formId;
+    const form = FORM_LIBRARY[formId];
+    const values = this.state.values;
+    const asymThreshold = this.props.asymmetryThreshold ?? form.asymmetryThreshold;
+
+    const tests = form.tests.map(t => calcTest(t, values, asymThreshold));
+
+    // Only tests with real, entered data feed the weighted averages — an unfilled
+    // test must never silently drag the score down as if it measured zero.
+    const weighted = tests.filter(t => Number(t.weight) > 0 && t.filled);
+    const totalW = weighted.reduce((a,t)=>a+Number(t.weight),0);
+    const overall = totalW ? weighted.reduce((a,t)=>a+t.score*Number(t.weight),0)/totalW : 0;
+    const overallKey = statusKey(overall);
+    const overallColors = STATUS_COLORS[overallKey];
+    const circ = 2*Math.PI*44;
+
+    const segs = form.segments.map(s => {
+      const segTests = tests.filter(t => t.segment === s.id);
+      const wtd = segTests.filter(t => Number(t.weight) > 0 && t.filled);
+      const w = wtd.reduce((a,t)=>a+Number(t.weight),0);
+      const hasData = w > 0;
+      const score = hasData ? wtd.reduce((a,t)=>a+t.score*Number(t.weight),0)/w : 0;
+      const colors = hasData ? STATUS_COLORS[statusKey(score)] : STATUS_COLORS.pending;
+      return { ...s, tests: segTests, score, scoreRound: hasData ? Math.round(score) : null, scoreDisplay: hasData ? String(Math.round(score)) : '—', hasData, statusLabel: colors.label, statusLower: colors.label.toLowerCase(), pillBg: colors.bg, pillFg: colors.fg };
+    });
+
+    const constraints = tests.filter(t => t.weight > 0 && t.filled).slice().sort((a,b)=>a.score-b.score).slice(0,5).map((t,i) => {
+      const colors = STATUS_COLORS[statusKey(t.score)];
+      return { rank: i+1, icon: t.icon, name: t.name, explanation: t.explanation, score: t.score, scoreRound: Math.round(t.score), pillBg: colors.bg, pillFg: colors.fg };
+    });
+
+    const asymList = tests.filter(t => Number.isFinite(t.asym) && t.asym >= asymThreshold).sort((a,b)=>b.asym-a.asym).slice(0,4).map(t => ({ name: t.name, asymText: t.asym.toFixed(1)+'%' }));
+    const hasAsym = asymList.length > 0;
+    const noAsym = !hasAsym;
+    const focusList = constraints.slice(0,3).map(c => ({ name: c.name }));
+
+    const radar = radarGeometry(segs.map(s=>s.abbr), segs.map(s=>s.score));
+
+    const segmentsExpandedDefault = this.props.segmentsExpanded ?? false;
+    const effectiveOpenId = this.state.openSegmentInitialized
+      ? this.state.openSegmentId
+      : (segmentsExpandedDefault ? form.segments[0].id : null);
+    const formSegments = form.segments.map(s => {
+      const isOpen = s.id === effectiveOpenId;
+      const segTests = form.tests.filter(t => t.segment === s.id).map(t => {
+        const type = t.type || '';
+        const isBilateral = type.includes('Bilateral');
+        const isSelectType = (t.min === null && t.max === null);
+        const isNumberType = !isBilateral && !isSelectType;
+        return {
+          id: t.id, name: t.name, icon: t.icon, explanation: t.explanation, weight: t.weight || 0,
+          unit: t.unit || '', normTextStr: normText(t),
+          isBilateral, isSelectType, isNumberType,
+          leftVal: values[t.id+'_left'] ?? '',
+          rightVal: values[t.id+'_right'] ?? '',
+          overallVal: values[t.id+'_overall'] ?? '',
+          onLeft: (e)=>this.setValue(t.id+'_left', e.target.value),
+          onRight: (e)=>this.setValue(t.id+'_right', e.target.value),
+          onOverallNumber: (e)=>this.setValue(t.id+'_overall', e.target.value),
+          onOverallSelect: (e)=>this.setValue(t.id+'_overall', e.target.value),
+        };
+      });
+      return {
+        id: s.id, title: s.title, count: segTests.length, tests: segTests, expanded: isOpen,
+        onToggleClick: (e) => { e.preventDefault(); this.toggleSegment(s.id, !isOpen); },
+        detailsRef: (el) => { if(el) this.segmentEls[s.id] = el; }
+      };
+    });
+
+    const tileColumnsCount = this.props.tileColumns ?? '4';
+    const tileColumns = `repeat(${tileColumnsCount},1fr)`;
+    const showTileMessage = this.props.showTileMessage ?? false;
+    const segBlocks = segs.map(s => ({
+      abbr: s.abbr, title: s.title, summary: s.summary, scoreRound: s.scoreRound, scoreDisplay: s.scoreDisplay, statusLower: s.statusLower,
+      tiles: s.tests.map(t => {
+        const colors = t.filled ? STATUS_COLORS[statusKey(t.score)] : STATUS_COLORS.pending;
+        const isBilateral = (t.type||'').includes('Bilateral');
+        const resultText = isBilateral ? `${shortFmt(t.left)} / ${shortFmt(t.right)} ${t.unit||''}`.trim() : fmt(t.result, t.unit);
+        const hasAsymVal = Number.isFinite(t.asym);
+        return {
+          icon: t.icon, name: t.name, category: (t.category||'').replace(' Tests',''),
+          score: t.score, scoreDisplay: t.filled ? String(Math.round(t.score)) : '—', pillBg: colors.bg, pillFg: colors.fg, statusLabel: colors.label,
+          message: t.explanation, showMessage: showTileMessage, resultText,
+          hasAsym: hasAsymVal, asymText: hasAsymVal ? `Asym ${t.asym.toFixed(1)}%` : '',
+          norm: normBarData(t)
+        };
+      })
+    }));
+
+    // Smart pagination: pack segments onto pages using mm-height estimates,
+    // and spill remaining tiles to the next page rather than clipping them.
+    const TILE_COLS_N = parseInt(tileColumnsCount, 10) || 3;
+    const PAGE_H_MM   = 271; // 297mm - 13mm padding top/bottom
+    const FIXED_H_MM  = 30;  // page header + subtitle + footer + flex gaps
+    const SEG_FULL_MM = 24;  // full segment score-card + description row
+    const SEG_CONT_MM = 10;  // compact "…continued" label
+    const ROW_H_MM    = 38;  // one tile row + grid gap
+
+    const segPages = [];
+    let curSegs = [];
+    let usedMm = FIXED_H_MM;
+
+    for (const seg of segBlocks) {
+      let tiles = seg.tiles.slice();
+      let isCont = false;
+
+      while (tiles.length > 0) {
+        const headerH = isCont ? SEG_CONT_MM : SEG_FULL_MM;
+        const spaceForTiles = PAGE_H_MM - usedMm - headerH;
+        if (spaceForTiles < ROW_H_MM && curSegs.length > 0) {
+          // not enough room for even one row — flush page and retry
+          segPages.push({ segBlocks: curSegs, pageNum: String(segPages.length + 2), label: `${segPages.length + 2} — Segment detail` });
+          curSegs = [];
+          usedMm = FIXED_H_MM;
+          continue;
+        }
+        const rowsFit = Math.max(1, Math.floor(spaceForTiles / ROW_H_MM));
+        const chunk = tiles.splice(0, rowsFit * TILE_COLS_N);
+        curSegs.push({ ...seg, tiles: chunk, showHeader: !isCont, isContinuation: isCont });
+        usedMm += headerH + Math.ceil(chunk.length / TILE_COLS_N) * ROW_H_MM;
+        isCont = true;
+        if (tiles.length > 0) {
+          segPages.push({ segBlocks: curSegs, pageNum: String(segPages.length + 2), label: `${segPages.length + 2} — Segment detail` });
+          curSegs = [];
+          usedMm = FIXED_H_MM;
+        }
+      }
+    }
+    if (curSegs.length > 0) {
+      segPages.push({ segBlocks: curSegs, pageNum: String(segPages.length + 2), label: `${segPages.length + 2} — Segment detail` });
+    }
+
+    return {
+      formOptions: Object.values(FORM_LIBRARY).map(f => ({ id: f.id, name: f.name })),
+      formId, onFormChange: (e) => this.changeForm(e.target.value),
+      athlete: this.state.athlete, onAthlete: (e) => this.setField('athlete', e.target.value),
+      gender: this.state.gender, onGender: (e) => this.setField('gender', e.target.value),
+      email: this.state.email, onEmail: (e) => this.setField('email', e.target.value),
+      phone: this.state.phone, onPhone: (e) => this.setField('phone', e.target.value),
+      date: this.state.date, onDate: (e) => this.setField('date', e.target.value),
+      coach: this.state.coach, onCoach: (e) => this.setField('coach', e.target.value),
+      formSegments,
+      scrollContainerRef: (el) => { if(el) this.scrollEl = el; },
+      overall, overallRound: Math.round(overall), overallLabel: overallColors.label, overallBg: overallColors.bg, overallFg: overallColors.fg,
+      overallHeadline: overallColors.label.charAt(0) + overallColors.label.slice(1).toLowerCase() + ' for HYROX with segmented priorities.',
+      dashArray: circ.toFixed(1), dashOffset: (circ*(1-overall/100)).toFixed(1),
+      scaleMarkerLeft: Math.max(0, Math.min(100, overall)),
+      segs, radar, constraints, asymList, hasAsym, noAsym, focusList, segBlocks, segPages, tileColumns,
+      doPrint: () => this.doPrint(),
+      saveLocal: () => this.saveLocal(),
+      loadLocal: () => this.loadLocal(),
+      saveToCloud: () => this.saveToCloud(),
+      loadFromCloud: () => this.loadFromCloud(),
+      updateReport: () => this.forceUpdate(),
+    };
+  }
+}
+</script>
+</body>
+</html>
