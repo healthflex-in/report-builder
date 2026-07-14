@@ -158,7 +158,7 @@
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 16px;border-top:1px solid #DDE2D5;background:#FBFCF7;flex:0 0 auto">
       <button onClick="{{ updateReport }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#C8FF00;color:#111111">Update report</button>
-      <button onClick="{{ doPrint }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#111111;color:#fff">Create PDF</button>
+      <button onClick="{{ generatePdf }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#111111;color:#fff">{{ pdfLabel }}</button>
       <button onClick="{{ saveLocal }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#EEF1E8;color:#111111">Save local</button>
       <button onClick="{{ loadLocal }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#EEF1E8;color:#111111">Load local</button>
       <button onClick="{{ saveToCloud }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#222;color:#C8FF00">Save to Cloud</button>
@@ -593,7 +593,8 @@ class Component extends DCLogic {
     phone: '',
     values: initValues(FORM_LIBRARY.hyrox_male),
     openSegmentId: null,
-    openSegmentInitialized: false
+    openSegmentInitialized: false,
+    pdfLabel: 'Create PDF',
   };
 
   segmentEls = {};
@@ -619,7 +620,56 @@ class Component extends DCLogic {
       }
     }, 60);
   }
-  doPrint(){ window.print(); }
+  async componentDidMount(){
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('autoload');
+    if(!sessionId) return;
+    try {
+      const res = await fetch('/api/load?sessionId=' + encodeURIComponent(sessionId));
+      if(!res.ok) return;
+      const data = await res.json();
+      this.setState({
+        formId: data.formId || this.state.formId,
+        athlete: data.athlete ?? this.state.athlete,
+        gender: data.gender ?? this.state.gender,
+        date: data.date ?? this.state.date,
+        coach: data.coach ?? this.state.coach,
+        email: data.email ?? this.state.email,
+        phone: data.phone ?? this.state.phone,
+        values: data.values || this.state.values,
+      });
+    } catch(e) { /* silent — Puppeteer will still render whatever is loaded */ }
+  }
+  async generatePdf(){
+    this.setState({ pdfLabel: 'Generating…' });
+    const data = {
+      formId: this.state.formId,
+      athlete: this.state.athlete,
+      gender: this.state.gender,
+      date: this.state.date,
+      coach: this.state.coach,
+      email: this.state.email,
+      phone: this.state.phone,
+      values: this.state.values,
+    };
+    try {
+      const res = await fetch('/api/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if(result.url) {
+        window.open(result.url, '_blank');
+      } else {
+        alert('Error: ' + (result.error || 'Failed to generate PDF'));
+      }
+    } catch(e) {
+      alert('Network error: ' + e.message);
+    } finally {
+      this.setState({ pdfLabel: 'Create PDF' });
+    }
+  }
   async saveToCloud(){
     const data = {
       formId: this.state.formId,
@@ -831,7 +881,8 @@ class Component extends DCLogic {
       dashArray: circ.toFixed(1), dashOffset: (circ*(1-overall/100)).toFixed(1),
       scaleMarkerLeft: Math.max(0, Math.min(100, overall)),
       segs, radar, constraints, asymList, hasAsym, noAsym, focusList, segBlocks, segPages, tileColumns,
-      doPrint: () => this.doPrint(),
+      generatePdf: () => this.generatePdf(),
+      pdfLabel: this.state.pdfLabel,
       saveLocal: () => this.saveLocal(),
       loadLocal: () => this.loadLocal(),
       saveToCloud: () => this.saveToCloud(),
