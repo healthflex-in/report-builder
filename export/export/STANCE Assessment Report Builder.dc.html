@@ -757,32 +757,44 @@ class Component extends DCLogic {
     const asymThreshold = this.props.asymmetryThreshold ?? form.asymmetryThreshold;
 
     const tests = form.tests.map(t => calcTest(t, values, asymThreshold));
+    const checkedTests = this.state.checkedTests;
 
-    // Only tests with real, entered data feed the weighted averages — an unfilled
-    // test must never silently drag the score down as if it measured zero.
-    const weighted = tests.filter(t => Number(t.weight) > 0 && t.filled);
-    const totalW = weighted.reduce((a,t)=>a+Number(t.weight),0);
-    const overall = totalW ? weighted.reduce((a,t)=>a+t.score*Number(t.weight),0)/totalW : 0;
-    const overallKey = statusKey(overall);
-    const overallColors = STATUS_COLORS[overallKey];
-    const circ = 2*Math.PI*44;
-
+    // Two-level scoring:
+    // Level 1 — segment score: weighted average of CHECKED tests that have data.
+    // Level 2 — overall score: weighted average of segment scores using categoryWeight.
+    // If a whole segment has no checked+filled tests, it drops out of the overall calculation.
     const segs = form.segments.map(s => {
       const segTests = tests.filter(t => t.segment === s.id);
-      const wtd = segTests.filter(t => Number(t.weight) > 0 && t.filled);
+      const wtd = segTests.filter(t => Number(t.weight) > 0 && !!checkedTests[t.id] && t.filled);
       const w = wtd.reduce((a,t)=>a+Number(t.weight),0);
       const hasData = w > 0;
       const score = hasData ? wtd.reduce((a,t)=>a+t.score*Number(t.weight),0)/w : 0;
       const colors = hasData ? STATUS_COLORS[statusKey(score)] : STATUS_COLORS.pending;
-      return { ...s, tests: segTests, score, scoreRound: hasData ? Math.round(score) : null, scoreDisplay: hasData ? String(Math.round(score)) : '—', hasData, statusLabel: colors.label, statusLower: colors.label.toLowerCase(), pillBg: colors.bg, pillFg: colors.fg };
+      const catW = Number(s.categoryWeight) || 0;
+      return { ...s, tests: segTests, score, scoreRound: hasData ? Math.round(score) : null, scoreDisplay: hasData ? String(Math.round(score)) : '—', hasData, statusLabel: colors.label, statusLower: colors.label.toLowerCase(), pillBg: colors.bg, pillFg: colors.fg, categoryWeight: catW };
     });
 
-    const constraints = tests.filter(t => t.weight > 0 && t.filled).slice().sort((a,b)=>a.score-b.score).slice(0,5).map((t,i) => {
+    const activeSegs = segs.filter(s => s.hasData);
+    const totalCatW = activeSegs.reduce((a,s)=>a+s.categoryWeight,0);
+    // Fall back to flat test-weight average for schemas without categoryWeight.
+    let overall;
+    if(totalCatW > 0) {
+      overall = activeSegs.reduce((a,s)=>a+s.score*s.categoryWeight,0)/totalCatW;
+    } else {
+      const flatW = tests.filter(t => Number(t.weight)>0 && !!checkedTests[t.id] && t.filled);
+      const fw = flatW.reduce((a,t)=>a+Number(t.weight),0);
+      overall = fw ? flatW.reduce((a,t)=>a+t.score*Number(t.weight),0)/fw : 0;
+    }
+    const overallKey = statusKey(overall);
+    const overallColors = STATUS_COLORS[overallKey];
+    const circ = 2*Math.PI*44;
+
+    const constraints = tests.filter(t => t.weight > 0 && !!checkedTests[t.id] && t.filled).slice().sort((a,b)=>a.score-b.score).slice(0,5).map((t,i) => {
       const colors = STATUS_COLORS[statusKey(t.score)];
       return { rank: i+1, icon: t.icon, name: t.name, explanation: t.explanation, score: t.score, scoreRound: Math.round(t.score), pillBg: colors.bg, pillFg: colors.fg };
     });
 
-    const asymList = tests.filter(t => Number.isFinite(t.asym) && t.asym >= asymThreshold).sort((a,b)=>b.asym-a.asym).slice(0,4).map(t => ({ name: t.name, asymText: t.asym.toFixed(1)+'%' }));
+    const asymList = tests.filter(t => !!checkedTests[t.id] && Number.isFinite(t.asym) && t.asym >= asymThreshold).sort((a,b)=>b.asym-a.asym).slice(0,4).map(t => ({ name: t.name, asymText: t.asym.toFixed(1)+'%' }));
     const hasAsym = asymList.length > 0;
     const noAsym = !hasAsym;
     const focusList = constraints.slice(0,3).map(c => ({ name: c.name }));
