@@ -813,22 +813,22 @@ class Component extends DCLogic {
     const tileColumnsCount = this.props.tileColumns ?? '4';
     const tileColumns = `repeat(${tileColumnsCount},1fr)`;
     const showTileMessage = this.props.showTileMessage ?? false;
-    const segBlocks = segs.map(s => ({
-      abbr: s.abbr, title: s.title, summary: s.summary, scoreRound: s.scoreRound, scoreDisplay: s.scoreDisplay, statusLower: s.statusLower,
-      tiles: s.tests.map(t => {
-        const colors = t.filled ? STATUS_COLORS[statusKey(t.score)] : STATUS_COLORS.pending;
+    const segBlocks = segs.map(s => {
+      const filledTiles = s.tests.filter(t => t.filled).map(t => {
+        const colors = STATUS_COLORS[statusKey(t.score)];
         const isBilateral = (t.type||'').includes('Bilateral');
         const resultText = isBilateral ? `${shortFmt(t.left)} / ${shortFmt(t.right)} ${t.unit||''}`.trim() : fmt(t.result, t.unit);
         const hasAsymVal = Number.isFinite(t.asym);
         return {
           icon: t.icon, name: t.name, category: (t.category||'').replace(' Tests',''),
-          score: t.score, scoreDisplay: t.filled ? String(Math.round(t.score)) : '—', pillBg: colors.bg, pillFg: colors.fg, statusLabel: colors.label,
+          score: t.score, scoreDisplay: String(Math.round(t.score)), pillBg: colors.bg, pillFg: colors.fg, statusLabel: colors.label,
           message: t.explanation, showMessage: showTileMessage, resultText,
           hasAsym: hasAsymVal, asymText: hasAsymVal ? `Asym ${t.asym.toFixed(1)}%` : '',
           norm: normBarData(t)
         };
-      })
-    }));
+      });
+      return { abbr: s.abbr, title: s.title, summary: s.summary, scoreRound: s.scoreRound, scoreDisplay: s.scoreDisplay, statusLower: s.statusLower, tiles: filledTiles };
+    }).filter(s => s.tiles.length > 0);
 
     // Smart pagination: pack segments onto pages using mm-height estimates,
     // and spill remaining tiles to the next page rather than clipping them.
