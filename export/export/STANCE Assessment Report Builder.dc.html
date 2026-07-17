@@ -595,6 +595,7 @@ class Component extends DCLogic {
     openSegmentId: null,
     openSegmentInitialized: false,
     pdfLabel: 'Create PDF',
+    _libVersion: 0,
   };
 
   segmentEls = {};
@@ -639,6 +640,17 @@ class Component extends DCLogic {
         values: data.values || this.state.values,
       });
     } catch(e) { /* silent — Puppeteer will still render whatever is loaded */ }
+    // Dynamically load all schemas from the API so the dropdown stays in sync
+    // with whatever is in the report-schema collection — no redeploy needed.
+    try {
+      const sr = await fetch('/api/schema');
+      if(sr.ok){
+        const schemas = await sr.json();
+        let added = 0;
+        schemas.forEach(s => { if(s.id && !FORM_LIBRARY[s.id]){ FORM_LIBRARY[s.id] = s; added++; } });
+        if(added > 0) this.setState(s => ({ _libVersion: s._libVersion + 1 }));
+      }
+    } catch(e) {}
   }
   async generatePdf(){
     this.setState({ pdfLabel: 'Generating…' });
