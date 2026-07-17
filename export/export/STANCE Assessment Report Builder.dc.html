@@ -102,6 +102,10 @@
                   <div style="font-weight:800;font-size:12px;display:flex;align-items:center;gap:6px">
                     <span>{{ t.name }}</span>
                     <span title="{{ t.explanation }}" style="width:16px;height:16px;border-radius:50%;background:#111111;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;line-height:1;flex:0 0 auto;cursor:help">i</span>
+                    <label style="margin-left:auto;display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;color:#697064;font-weight:700;flex:0 0 auto;user-select:none">
+                      <input type="checkbox" checked="{{ t.checked }}" onChange="{{ t.onToggleCheck }}" style="width:14px;height:14px;cursor:pointer;accent-color:#111" />
+                      Show
+                    </label>
                   </div>
                   <div style="font-size:10px;color:#697064;margin-top:2px">Target: {{ t.normTextStr }} • Weight: {{ t.weight }}</div>
 
@@ -596,6 +600,7 @@ class Component extends DCLogic {
     openSegmentInitialized: false,
     pdfLabel: 'Create PDF',
     _libVersion: 0,
+    checkedTests: {},
   };
 
   segmentEls = {};
@@ -603,7 +608,8 @@ class Component extends DCLogic {
 
   setField(key, val){ this.setState({ [key]: val }); }
   setValue(id, val){ this.setState(s => ({ values: { ...s.values, [id]: val } })); }
-  changeForm(id){ this.setState({ formId: id, values: initValues(FORM_LIBRARY[id]), openSegmentId: null, openSegmentInitialized: false }); }
+  changeForm(id){ this.setState({ formId: id, values: initValues(FORM_LIBRARY[id]), openSegmentId: null, openSegmentInitialized: false, checkedTests: {} }); }
+  toggleCheck(id){ this.setState(s => ({ checkedTests: { ...s.checkedTests, [id]: !s.checkedTests[id] } })); }
 
   toggleSegment(segId, willOpen){
     this.setState({ openSegmentId: willOpen ? segId : null, openSegmentInitialized: true });
@@ -645,6 +651,7 @@ class Component extends DCLogic {
         email: data.email ?? this.state.email,
         phone: data.phone ?? this.state.phone,
         values: data.values || this.state.values,
+        checkedTests: data.checkedTests || {},
       });
     } catch(e) { /* silent — Puppeteer will still render whatever is loaded */ }
   }
@@ -659,6 +666,7 @@ class Component extends DCLogic {
       email: this.state.email,
       phone: this.state.phone,
       values: this.state.values,
+      checkedTests: this.state.checkedTests,
     };
     try {
       const res = await fetch('/api/pdf', {
@@ -687,7 +695,8 @@ class Component extends DCLogic {
       coach: this.state.coach,
       email: this.state.email,
       phone: this.state.phone,
-      values: this.state.values
+      values: this.state.values,
+      checkedTests: this.state.checkedTests,
     };
     try {
       const res = await fetch('/api/save', {
@@ -721,7 +730,8 @@ class Component extends DCLogic {
         coach: data.coach ?? this.state.coach,
         email: data.email ?? this.state.email,
         phone: data.phone ?? this.state.phone,
-        values: data.values || {}
+        values: data.values || {},
+        checkedTests: data.checkedTests || {},
       });
       alert('Data loaded from cloud!');
     } catch(e) {
@@ -729,7 +739,7 @@ class Component extends DCLogic {
     }
   }
   saveLocal(){
-    const data = { form: this.state.formId, athlete: this.state.athlete, gender: this.state.gender, date: this.state.date, coach: this.state.coach, values: this.state.values };
+    const data = { form: this.state.formId, athlete: this.state.athlete, gender: this.state.gender, date: this.state.date, coach: this.state.coach, values: this.state.values, checkedTests: this.state.checkedTests };
     localStorage.setItem('stance_assessment_builder', JSON.stringify(data));
     alert('Saved locally in this browser.');
   }
@@ -737,7 +747,7 @@ class Component extends DCLogic {
     const raw = localStorage.getItem('stance_assessment_builder');
     if(!raw){ alert('No local save found.'); return; }
     const data = JSON.parse(raw);
-    this.setState({ formId: data.form || this.state.formId, athlete: data.athlete ?? this.state.athlete, gender: data.gender ?? this.state.gender, date: data.date ?? this.state.date, coach: data.coach ?? this.state.coach, values: data.values || {} });
+    this.setState({ formId: data.form || this.state.formId, athlete: data.athlete ?? this.state.athlete, gender: data.gender ?? this.state.gender, date: data.date ?? this.state.date, coach: data.coach ?? this.state.coach, values: data.values || {}, checkedTests: data.checkedTests || {} });
   }
 
   renderVals(){
@@ -797,10 +807,12 @@ class Component extends DCLogic {
           leftVal: values[t.id+'_left'] ?? '',
           rightVal: values[t.id+'_right'] ?? '',
           overallVal: values[t.id+'_overall'] ?? '',
+          checked: !!this.state.checkedTests[t.id],
           onLeft: (e)=>this.setValue(t.id+'_left', e.target.value),
           onRight: (e)=>this.setValue(t.id+'_right', e.target.value),
           onOverallNumber: (e)=>this.setValue(t.id+'_overall', e.target.value),
           onOverallSelect: (e)=>this.setValue(t.id+'_overall', e.target.value),
+          onToggleCheck: ()=>this.toggleCheck(t.id),
         };
       });
       return {
@@ -813,8 +825,9 @@ class Component extends DCLogic {
     const tileColumnsCount = this.props.tileColumns ?? '4';
     const tileColumns = `repeat(${tileColumnsCount},1fr)`;
     const showTileMessage = this.props.showTileMessage ?? false;
+    const checkedTests = this.state.checkedTests;
     const segBlocks = segs.map(s => {
-      const filledTiles = s.tests.filter(t => t.filled).map(t => {
+      const filledTiles = s.tests.filter(t => !!checkedTests[t.id]).map(t => {
         const colors = STATUS_COLORS[statusKey(t.score)];
         const isBilateral = (t.type||'').includes('Bilateral');
         const resultText = isBilateral ? `${shortFmt(t.left)} / ${shortFmt(t.right)} ${t.unit||''}`.trim() : fmt(t.result, t.unit);
