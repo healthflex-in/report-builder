@@ -131,8 +131,9 @@
                       <div>
                         <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Result</div>
                         <select value="{{ t.overallVal }}" onChange="{{ t.onOverallSelect }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%">
-                          <option>Negative</option>
-                          <option>Positive</option>
+                          <option value="">— select —</option>
+                          <option value="Negative">Negative</option>
+                          <option value="Positive">Positive</option>
                         </select>
                       </div>
                     </div>
@@ -495,7 +496,7 @@ function initValues(form){
       values[t.id+'_left'] = t.left ?? '';
       values[t.id+'_right'] = t.right ?? '';
     } else if(t.min===null && t.max===null){
-      values[t.id+'_overall'] = t.overall ?? 'Negative';
+      values[t.id+'_overall'] = t.overall ?? '';
     } else {
       values[t.id+'_overall'] = t.overall ?? '';
     }
@@ -536,7 +537,7 @@ function calcTest(t, values, asymThreshold){
       sc = Math.max(30, sc * Math.max(.35, 1-((asym-asymThreshold)/100*3.2)));
     }
   } else if(t.min===null && t.max===null){
-    const chosen = overallRaw || t.overall || null;
+    const chosen = (overallRaw !== '' && overallRaw != null) ? overallRaw : null;
     filled = !!chosen;
     result = chosen || '—';
     sc = filled ? ((String(result).toLowerCase()==='negative') ? 100 : 30) : null;
