@@ -799,7 +799,8 @@ class Component extends DCLogic {
     const noAsym = !hasAsym;
     const focusList = constraints.slice(0,3).map(c => ({ name: c.name }));
 
-    const radar = radarGeometry(segs.map(s=>s.abbr), segs.map(s=>s.score));
+    const radarSegs = segs.filter(s => s.hasData);
+    const radar = radarGeometry(radarSegs.map(s=>s.abbr), radarSegs.map(s=>s.score));
 
     const segmentsExpandedDefault = this.props.segmentsExpanded ?? false;
     const effectiveOpenId = this.state.openSegmentInitialized
