@@ -245,6 +245,7 @@
           <h2 style="font-family:'Unbounded',sans-serif;font-size:13px;margin:0;font-weight:600">Readiness map</h2>
         </div>
 
+        <sc-if value="{{ hasRadarData }}" hint-placeholder-val="{{ false }}">
         <div style="background:#fff;border:1px solid #DDE2D5;border-radius:18px;padding:14px;display:grid;grid-template-columns:310px 1fr;gap:14px;align-items:center">
           <div style="position:relative;width:100%">
             <svg viewBox="0 0 210 195" style="width:100%;height:auto;display:block">
@@ -285,6 +286,7 @@
             </sc-for>
           </div>
         </div>
+        </sc-if>
 
         <div style="display:flex;justify-content:space-between;align-items:flex-end;margin:14px 0 8px">
           <h2 style="font-family:'Unbounded',sans-serif;font-size:13px;margin:0;font-weight:600">Key constraints</h2>
@@ -800,7 +802,8 @@ class Component extends DCLogic {
     const focusList = constraints.slice(0,3).map(c => ({ name: c.name }));
 
     const radarSegs = segs.filter(s => s.hasData);
-    const radar = radarGeometry(radarSegs.map(s=>s.abbr), radarSegs.map(s=>s.score));
+    const hasRadarData = radarSegs.length > 0;
+    const radar = hasRadarData ? radarGeometry(radarSegs.map(s=>s.abbr), radarSegs.map(s=>s.score)) : { gridPolys:[], axisLines:[], labelPoints:[], valuePolygonPoints:'', dots:[] };
 
     const segmentsExpandedDefault = this.props.segmentsExpanded ?? false;
     const effectiveOpenId = this.state.openSegmentInitialized
@@ -914,7 +917,7 @@ class Component extends DCLogic {
       overallHeadline: overallColors.label.charAt(0) + overallColors.label.slice(1).toLowerCase() + ' for HYROX with segmented priorities.',
       dashArray: circ.toFixed(1), dashOffset: (circ*(1-overall/100)).toFixed(1),
       scaleMarkerLeft: Math.max(0, Math.min(100, overall)),
-      segs, radar, constraints, asymList, hasAsym, noAsym, focusList, segBlocks, segPages, tileColumns,
+      segs, radar, hasRadarData, constraints, asymList, hasAsym, noAsym, focusList, segBlocks, segPages, tileColumns,
       generatePdf: () => this.generatePdf(),
       pdfLabel: this.state.pdfLabel,
       saveLocal: () => this.saveLocal(),
