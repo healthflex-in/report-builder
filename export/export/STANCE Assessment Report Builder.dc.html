@@ -664,11 +664,18 @@ class Component extends DCLogic {
     }, 60);
   }
   async componentDidMount(){
-    // Fire schema fetch in the background — never blocks session restore or PDF rendering.
+    // Always sync schemas from MongoDB so the UI is never running stale hardcoded data.
     fetch('/api/schema').then(r => r.ok ? r.json() : []).then(schemas => {
-      let added = 0;
-      schemas.forEach(s => { if(s.id && !FORM_LIBRARY[s.id]){ FORM_LIBRARY[s.id] = s; added++; } });
-      if(added > 0) this.setState(s => ({ _libVersion: s._libVersion + 1 }));
+      let changed = 0;
+      schemas.forEach(s => { if(s.id){ FORM_LIBRARY[s.id] = s; changed++; } });
+      if(!changed) return;
+      // Re-init values for the active form: add slots for any new tests, keep existing entries.
+      const curForm = FORM_LIBRARY[this.state.formId];
+      if(curForm){
+        this.setState(s => ({ _libVersion: s._libVersion + 1, values: { ...initValues(curForm), ...s.values } }));
+      } else {
+        this.setState(s => ({ _libVersion: s._libVersion + 1 }));
+      }
     }).catch(() => {});
     // Auto-load a saved session when ?autoload=<id> is in the URL (used by PDF renderer too).
     const params = new URLSearchParams(window.location.search);
