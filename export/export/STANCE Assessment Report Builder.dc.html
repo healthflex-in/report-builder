@@ -90,9 +90,13 @@
 
       <sc-for list="{{ formSegments }}" as="seg" hint-placeholder-count="4">
         <details ref="{{ seg.detailsRef }}" open="{{ seg.expanded }}" style="border:1px solid #DDE2D5;border-radius:18px;overflow:hidden;background:#fff;flex:0 0 auto">
-          <summary onClick="{{ seg.onToggleClick }}" style="cursor:pointer;background:#F5F7EF;padding:12px 14px;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center;list-style:none">
+          <summary onClick="{{ seg.onToggleClick }}" style="cursor:pointer;background:#F5F7EF;padding:12px 14px;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center;list-style:none;gap:8px">
             <span>{{ seg.title }}</span>
-            <span style="font-family:'Montserrat',sans-serif;font-weight:700;color:#697064">{{ seg.count }} tests</span>
+            <label onClick="{{ seg.onSelectAll }}" style="display:flex;align-items:center;gap:5px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;color:#697064;margin-left:auto;flex:0 0 auto;user-select:none">
+              <input type="checkbox" checked="{{ seg.allChecked }}" style="width:13px;height:13px;cursor:pointer;accent-color:#111" />
+              Select all
+            </label>
+            <span style="font-family:'Montserrat',sans-serif;font-weight:700;color:#697064;flex:0 0 auto">{{ seg.count }} tests</span>
           </summary>
           <div style="padding:12px;display:flex;flex-direction:column">
             <sc-for list="{{ seg.tests }}" as="t" hint-placeholder-count="4">
@@ -613,6 +617,7 @@ class Component extends DCLogic {
   setValue(id, val){ this.setState(s => ({ values: { ...s.values, [id]: val } })); }
   changeForm(id){ this.setState({ formId: id, values: initValues(FORM_LIBRARY[id]), openSegmentId: null, openSegmentInitialized: false, checkedTests: {} }); }
   toggleCheck(id){ this.setState(s => ({ checkedTests: { ...s.checkedTests, [id]: !s.checkedTests[id] } })); }
+  selectAllSegment(segId){ const form=FORM_LIBRARY[this.state.formId]; const ids=form.tests.filter(t=>t.segment===segId).map(t=>t.id); const allOn=ids.every(id=>!!this.state.checkedTests[id]); const upd={}; ids.forEach(id=>{upd[id]=!allOn;}); this.setState(s=>({checkedTests:{...s.checkedTests,...upd}})); }
 
   toggleSegment(segId, willOpen){
     this.setState({ openSegmentId: willOpen ? segId : null, openSegmentInitialized: true });
@@ -834,6 +839,8 @@ class Component extends DCLogic {
       });
       return {
         id: s.id, title: s.title, count: segTests.length, tests: segTests, expanded: isOpen,
+        allChecked: segTests.every(t => !!this.state.checkedTests[t.id]),
+        onSelectAll: (e) => { e.stopPropagation(); this.selectAllSegment(s.id); },
         onToggleClick: (e) => { e.preventDefault(); this.toggleSegment(s.id, !isOpen); },
         detailsRef: (el) => { if(el) this.segmentEls[s.id] = el; }
       };
