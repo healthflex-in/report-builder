@@ -956,7 +956,7 @@ class Component extends DCLogic {
       overallHeadline: overallColors.label.charAt(0) + overallColors.label.slice(1).toLowerCase() + ' for ' + (form.sport || form.name) + ' with segmented priorities.',
       dashArray: circ.toFixed(1), dashOffset: (circ*(1-overall/100)).toFixed(1),
       scaleMarkerLeft: Math.max(0, Math.min(100, overall)),
-      segs, radar, hasRadarData, constraints, asymList, hasAsym, noAsym, focusList, segBlocks, segPages, tileColumns,
+      segs, radarSegs, radar, hasRadarData, constraints, asymList, hasAsym, noAsym, focusList, segBlocks, segPages, tileColumns,
       generatePdf: () => this.generatePdf(),
       pdfLabel: this.state.pdfLabel,
       saveLocal: () => this.saveLocal(),
