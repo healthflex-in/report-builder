@@ -86,6 +86,10 @@
             <input value="{{ email }}" onChange="{{ onEmail }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
           </div>
         </div>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">
+          <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Next Training Focus — Coach Notes</label>
+          <textarea value="{{ trainingNotes }}" onChange="{{ onTrainingNotes }}" rows="3" placeholder="Add a short summary for the athlete's next training block…" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none;resize:vertical;font-family:inherit"></textarea>
+        </div>
       </div>
 
       <sc-for list="{{ formSegments }}" as="seg" hint-placeholder-count="4">
@@ -197,8 +201,9 @@
             </div>
           </div>
           <div style="text-align:right;text-transform:uppercase;letter-spacing:.12em;font-size:9px;color:#697064;font-weight:800;flex:0 0 auto">
-            Performance diagnostics
+            High Performance Assessment
             <b style="display:block;font-family:'Unbounded',sans-serif;font-size:15px;color:#111111;letter-spacing:.02em;margin-top:4px;font-weight:600">{{ formName }}</b>
+            <span style="display:block;font-size:8px;color:#697064;font-weight:700;margin-top:2px;letter-spacing:.1em">{{ ageGroup }}</span>
           </div>
         </header>
 
@@ -335,12 +340,15 @@
             <div style="background:#fff;border:1px solid #DDE2D5;border-radius:18px;padding:12px">
               <span style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#697064;font-size:7.5px;font-weight:800;margin-bottom:6px">Next training focus</span>
               <div style="display:flex;flex-direction:column;gap:8px">
-                <sc-for list="{{ focusList }}" as="f" hint-placeholder-count="3">
-                  <div style="border-left:4px solid #C8FF00;padding-left:9px">
-                    <b style="font-size:10.5px;display:block">{{ f.name }}</b>
-                    <p style="margin:2px 0 0;font-size:8.8px;color:#697064">Targeted progression and retest in 3–4 weeks.</p>
+                <sc-for list="{{ focusList }}" as="f" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:flex-start;gap:8px;border-left:4px solid #C8FF00;padding-left:9px">
+                    <span style="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:#C8FF00;line-height:1.1;flex:0 0 auto;margin-top:1px">{{ f.rank }}</span>
+                    <b style="font-size:10.5px;display:block;line-height:1.3">{{ f.name }}</b>
                   </div>
                 </sc-for>
+                <sc-if value="{{ hasTrainingNotes }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:4px;padding:8px 10px;background:#F5F7EF;border-radius:10px;font-size:9px;color:#333;line-height:1.5;white-space:pre-wrap">{{ trainingNotes }}</div>
+                </sc-if>
               </div>
             </div>
           </div>
@@ -348,7 +356,7 @@
       </div>
 
       <div style="position:relative;z-index:1;border-top:1px solid #DDE2D5;padding-top:8px;margin-top:12px;display:flex;justify-content:space-between;color:#697064;font-size:8px">
-        <span>STANCE Health • Athlete-facing summary</span>
+        <span>Assessment Report Summary</span>
         <span>Page 1</span>
       </div>
     </section>
@@ -370,8 +378,9 @@
               </div>
             </div>
             <div style="text-align:right;text-transform:uppercase;letter-spacing:.12em;font-size:9px;color:#697064;font-weight:800;flex:0 0 auto">
-              Coach / clinician appendix
-              <b style="display:block;font-family:'Unbounded',sans-serif;font-size:15px;color:#111111;letter-spacing:.02em;margin-top:4px;font-weight:600">Segment Readiness + Test Tiles</b>
+              High Performance Assessment
+              <b style="display:block;font-family:'Unbounded',sans-serif;font-size:15px;color:#111111;letter-spacing:.02em;margin-top:4px;font-weight:600">{{ formName }}</b>
+              <span style="display:block;font-size:8px;color:#697064;font-weight:700;margin-top:2px;letter-spacing:.1em">{{ ageGroup }}</span>
             </div>
           </header>
 
@@ -438,7 +447,7 @@
                     </div>
 
                     <div style="display:flex;gap:4px;flex-wrap:wrap">
-                      <span style="background:#F1F3EC;border-radius:99px;padding:3px 6px;font-size:6.8px;color:#697064;font-weight:800">{{ t.resultText }}</span>
+                      <span style="background:#111111;border-radius:99px;padding:3px 8px;font-size:7px;color:#C8FF00;font-weight:800;letter-spacing:.04em">{{ t.resultText }}</span>
                       <sc-if value="{{ t.hasAsym }}" hint-placeholder-val="{{ false }}">
                         <span style="background:#F1F3EC;border-radius:99px;padding:3px 6px;font-size:6.8px;color:#697064;font-weight:800">{{ t.asymText }}</span>
                       </sc-if>
@@ -602,6 +611,7 @@ class Component extends DCLogic {
     coach: 'Shubh',
     email: '',
     phone: '',
+    trainingNotes: '',
     values: initValues(FORM_LIBRARY.hyrox_male),
     openSegmentId: null,
     openSegmentInitialized: false,
@@ -615,7 +625,7 @@ class Component extends DCLogic {
 
   setField(key, val){ this.setState({ [key]: val }); }
   setValue(id, val){ this.setState(s => ({ values: { ...s.values, [id]: val } })); }
-  changeForm(id){ this.setState({ formId: id, values: initValues(FORM_LIBRARY[id]), openSegmentId: null, openSegmentInitialized: false, checkedTests: {} }); }
+  changeForm(id){ this.setState({ formId: id, values: initValues(FORM_LIBRARY[id]), openSegmentId: null, openSegmentInitialized: false, checkedTests: {}, trainingNotes: '' }); }
   toggleCheck(id){ this.setState(s => ({ checkedTests: { ...s.checkedTests, [id]: !s.checkedTests[id] } })); }
   selectAllSegment(segId){ const form=FORM_LIBRARY[this.state.formId]; const ids=form.tests.filter(t=>t.segment===segId).map(t=>t.id); const allOn=ids.every(id=>!!this.state.checkedTests[id]); const upd={}; ids.forEach(id=>{upd[id]=!allOn;}); this.setState(s=>({checkedTests:{...s.checkedTests,...upd}})); }
 
@@ -673,6 +683,7 @@ class Component extends DCLogic {
       coach: this.state.coach,
       email: this.state.email,
       phone: this.state.phone,
+      trainingNotes: this.state.trainingNotes,
       values: this.state.values,
       checkedTests: this.state.checkedTests,
     };
@@ -703,6 +714,7 @@ class Component extends DCLogic {
       coach: this.state.coach,
       email: this.state.email,
       phone: this.state.phone,
+      trainingNotes: this.state.trainingNotes,
       values: this.state.values,
       checkedTests: this.state.checkedTests,
     };
@@ -738,6 +750,7 @@ class Component extends DCLogic {
         coach: data.coach ?? this.state.coach,
         email: data.email ?? this.state.email,
         phone: data.phone ?? this.state.phone,
+        trainingNotes: data.trainingNotes ?? this.state.trainingNotes,
         values: data.values || {},
         checkedTests: data.checkedTests || {},
       });
@@ -747,7 +760,7 @@ class Component extends DCLogic {
     }
   }
   saveLocal(){
-    const data = { form: this.state.formId, athlete: this.state.athlete, gender: this.state.gender, date: this.state.date, coach: this.state.coach, values: this.state.values, checkedTests: this.state.checkedTests };
+    const data = { form: this.state.formId, athlete: this.state.athlete, gender: this.state.gender, date: this.state.date, coach: this.state.coach, trainingNotes: this.state.trainingNotes, values: this.state.values, checkedTests: this.state.checkedTests };
     localStorage.setItem('stance_assessment_builder', JSON.stringify(data));
     alert('Saved locally in this browser.');
   }
@@ -755,7 +768,7 @@ class Component extends DCLogic {
     const raw = localStorage.getItem('stance_assessment_builder');
     if(!raw){ alert('No local save found.'); return; }
     const data = JSON.parse(raw);
-    this.setState({ formId: data.form || this.state.formId, athlete: data.athlete ?? this.state.athlete, gender: data.gender ?? this.state.gender, date: data.date ?? this.state.date, coach: data.coach ?? this.state.coach, values: data.values || {}, checkedTests: data.checkedTests || {} });
+    this.setState({ formId: data.form || this.state.formId, athlete: data.athlete ?? this.state.athlete, gender: data.gender ?? this.state.gender, date: data.date ?? this.state.date, coach: data.coach ?? this.state.coach, trainingNotes: data.trainingNotes ?? this.state.trainingNotes, values: data.values || {}, checkedTests: data.checkedTests || {} });
   }
 
   renderVals(){
@@ -805,7 +818,7 @@ class Component extends DCLogic {
     const asymList = tests.filter(t => !!checkedTests[t.id] && Number.isFinite(t.asym) && t.asym >= asymThreshold).sort((a,b)=>b.asym-a.asym).slice(0,4).map(t => ({ name: t.name, asymText: t.asym.toFixed(1)+'%' }));
     const hasAsym = asymList.length > 0;
     const noAsym = !hasAsym;
-    const focusList = constraints.slice(0,3).map(c => ({ name: c.name }));
+    const focusList = constraints.slice(0,4).map((c, i) => ({ rank: i + 1, name: c.name }));
 
     const radarSegs = segs.filter(s => s.hasData);
     const hasRadarData = radarSegs.length > 0;
@@ -850,7 +863,7 @@ class Component extends DCLogic {
     const tileColumns = `repeat(${tileColumnsCount},1fr)`;
     const showTileMessage = this.props.showTileMessage ?? false;
     const segBlocks = segs.map(s => {
-      const filledTiles = s.tests.filter(t => !!checkedTests[t.id]).map(t => {
+      const filledTiles = s.tests.filter(t => !!checkedTests[t.id] && t.filled).map(t => {
         const colors = STATUS_COLORS[statusKey(t.score)];
         const isBilateral = (t.type||'').includes('Bilateral');
         const resultText = isBilateral ? `${shortFmt(t.left)} / ${shortFmt(t.right)} ${t.unit||''}`.trim() : fmt(t.result, t.unit);
@@ -918,9 +931,11 @@ class Component extends DCLogic {
       phone: this.state.phone, onPhone: (e) => this.setField('phone', e.target.value),
       date: this.state.date, onDate: (e) => this.setField('date', e.target.value),
       coach: this.state.coach, onCoach: (e) => this.setField('coach', e.target.value),
+      trainingNotes: this.state.trainingNotes, onTrainingNotes: (e) => this.setField('trainingNotes', e.target.value),
+      hasTrainingNotes: (this.state.trainingNotes || '').trim().length > 0,
       formSegments,
       scrollContainerRef: (el) => { if(el) this.scrollEl = el; },
-      formName: form.name, sport: form.sport || '',
+      formName: form.name, sport: form.sport || '', ageGroup: form.ageGroup || '',
       overall, overallRound: Math.round(overall), overallLabel: overallColors.label, overallBg: overallColors.bg, overallFg: overallColors.fg,
       overallHeadline: overallColors.label.charAt(0) + overallColors.label.slice(1).toLowerCase() + ' for ' + (form.sport || form.name) + ' with segmented priorities.',
       dashArray: circ.toFixed(1), dashOffset: (circ*(1-overall/100)).toFixed(1),
