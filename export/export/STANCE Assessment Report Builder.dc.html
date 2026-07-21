@@ -194,7 +194,7 @@
           </div>
           <div style="text-align:right;text-transform:uppercase;letter-spacing:.12em;font-size:9px;color:#697064;font-weight:800;flex:0 0 auto">
             Performance diagnostics
-            <b style="display:block;font-family:'Unbounded',sans-serif;font-size:15px;color:#111111;letter-spacing:.02em;margin-top:4px;font-weight:600">HYROX Readiness Report</b>
+            <b style="display:block;font-family:'Unbounded',sans-serif;font-size:15px;color:#111111;letter-spacing:.02em;margin-top:4px;font-weight:600">{{ formName }}</b>
           </div>
         </header>
 
@@ -218,7 +218,7 @@
         </div>
 
         <section style="display:grid;grid-template-columns:210px 1fr;gap:20px;background:#111111;color:#fff;border-radius:22px;padding:17px 20px;margin-bottom:14px;position:relative;overflow:hidden">
-          <div style="position:absolute;right:-8px;bottom:-22px;font-family:'Unbounded',sans-serif;font-size:74px;font-weight:700;color:rgba(255,255,255,.045);pointer-events:none">HYROX</div>
+          <div style="position:absolute;right:-8px;bottom:-22px;font-family:'Unbounded',sans-serif;font-size:74px;font-weight:700;color:rgba(255,255,255,.045);pointer-events:none">{{ sport }}</div>
           <div style="display:flex;align-items:center;gap:14px;position:relative;z-index:1">
             <svg viewBox="0 0 100 100" style="width:92px;height:92px;flex:0 0 auto">
               <circle cx="50" cy="50" r="44" style="stroke:rgba(255,255,255,.17);stroke-width:12;fill:none"></circle>
@@ -232,7 +232,7 @@
           <div style="position:relative;z-index:1;min-width:0">
             <span style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#bbb;font-size:9px;font-weight:800;margin-bottom:5px">Overall readiness</span>
             <h1 style="font-family:'Unbounded',sans-serif;font-size:18px;line-height:1.2;margin:0 0 8px;font-weight:600">{{ overallHeadline }}</h1>
-            <p style="margin:0;color:#E6E6E6;font-size:10.5px;max-width:520px;line-height:1.5">This report converts mobility, strength, force-platform, grip and HYROX simulation tests into a concise readiness profile.</p>
+            <p style="margin:0;color:#E6E6E6;font-size:10.5px;max-width:520px;line-height:1.5">This report converts test data into a concise readiness profile across all assessed categories.</p>
             <div style="margin-top:14px">
               <div style="display:flex;justify-content:space-between;font-size:8px;text-transform:uppercase;letter-spacing:.11em;color:#bbb;font-weight:800;margin-bottom:5px"><span>Build</span><span>Develop</span><span>Ready</span></div>
               <div style="height:9px;border-radius:99px;background:linear-gradient(90deg,#E84A4A,#FFB020,#C8FF00);position:relative">
@@ -913,8 +913,9 @@ class Component extends DCLogic {
       coach: this.state.coach, onCoach: (e) => this.setField('coach', e.target.value),
       formSegments,
       scrollContainerRef: (el) => { if(el) this.scrollEl = el; },
+      formName: form.name, sport: form.sport || '',
       overall, overallRound: Math.round(overall), overallLabel: overallColors.label, overallBg: overallColors.bg, overallFg: overallColors.fg,
-      overallHeadline: overallColors.label.charAt(0) + overallColors.label.slice(1).toLowerCase() + ' for HYROX with segmented priorities.',
+      overallHeadline: overallColors.label.charAt(0) + overallColors.label.slice(1).toLowerCase() + ' for ' + (form.sport || form.name) + ' with segmented priorities.',
       dashArray: circ.toFixed(1), dashOffset: (circ*(1-overall/100)).toFixed(1),
       scaleMarkerLeft: Math.max(0, Math.min(100, overall)),
       segs, radar, hasRadarData, constraints, asymList, hasAsym, noAsym, focusList, segBlocks, segPages, tileColumns,
