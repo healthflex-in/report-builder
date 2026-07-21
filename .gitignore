@@ -4,3 +4,5 @@ node_modules/
 *.zip
 .codeshipp/
 seed.js
+.gstack/
+.vercel

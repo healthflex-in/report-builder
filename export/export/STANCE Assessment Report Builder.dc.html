@@ -842,7 +842,6 @@ class Component extends DCLogic {
     const tileColumnsCount = this.props.tileColumns ?? '4';
     const tileColumns = `repeat(${tileColumnsCount},1fr)`;
     const showTileMessage = this.props.showTileMessage ?? false;
-    const checkedTests = this.state.checkedTests;
     const segBlocks = segs.map(s => {
       const filledTiles = s.tests.filter(t => !!checkedTests[t.id]).map(t => {
         const colors = STATUS_COLORS[statusKey(t.score)];
