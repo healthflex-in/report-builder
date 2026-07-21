@@ -86,10 +86,6 @@
             <input value="{{ email }}" onChange="{{ onEmail }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">
-          <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Next Training Focus — Coach Notes</label>
-          <textarea value="{{ trainingNotes }}" onChange="{{ onTrainingNotes }}" rows="3" placeholder="Add a short summary for the athlete's next training block…" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none;resize:vertical;font-family:inherit"></textarea>
-        </div>
       </div>
 
       <sc-for list="{{ formSegments }}" as="seg" hint-placeholder-count="4">
@@ -166,6 +162,23 @@
           </div>
         </details>
       </sc-for>
+
+      <div style="border:1px solid #DDE2D5;border-radius:18px;padding:14px;background:#fff;flex:0 0 auto">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <h3 style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:600;margin:0">Next Training Focus</h3>
+          <button onClick="{{ onResetFocus }}" style="border:0;background:none;font-size:9px;color:#697064;font-weight:700;cursor:pointer;text-decoration:underline;padding:0">Reset to auto</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <sc-for list="{{ focusEditorItems }}" as="fi" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;color:#C8FF00;background:#111;border-radius:6px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:9px">{{ fi.rank }}</span>
+              <input value="{{ fi.text }}" onChange="{{ fi.onChange }}" style="flex:1;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:7px 9px;font-size:11px;outline:none;min-width:0" />
+              <button onClick="{{ fi.onDelete }}" style="border:0;background:none;font-size:18px;color:#697064;cursor:pointer;flex:0 0 auto;line-height:1;padding:0 4px">×</button>
+            </div>
+          </sc-for>
+          <button onClick="{{ onAddFocusItem }}" style="border:1px dashed #DDE2D5;border-radius:10px;padding:8px;font-size:10px;color:#697064;font-weight:700;cursor:pointer;background:none;text-align:center;margin-top:2px">+ Add point</button>
+        </div>
+      </div>
 
     </div>
 
@@ -277,7 +290,7 @@
             </sc-for>
           </div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
-            <sc-for list="{{ segs }}" as="s" hint-placeholder-count="4">
+            <sc-for list="{{ radarSegs }}" as="s" hint-placeholder-count="4">
               <div style="background:#F5F7EF;border:1px solid #DDE2D5;border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:4px">
                 <div style="display:flex;justify-content:space-between;align-items:center">
                   <div style="width:24px;height:24px;border-radius:7px;background:#ECFF99;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:7.5px;font-weight:700">{{ s.abbr }}</div>
@@ -340,14 +353,11 @@
               <span style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#697064;font-size:7.5px;font-weight:800;margin-bottom:6px">Next training focus</span>
               <div style="display:flex;flex-direction:column;gap:8px">
                 <sc-for list="{{ focusList }}" as="f" hint-placeholder-count="4">
-                  <div style="display:flex;align-items:flex-start;gap:8px;border-left:4px solid #C8FF00;padding-left:9px">
-                    <span style="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:#C8FF00;line-height:1.1;flex:0 0 auto;margin-top:1px">{{ f.rank }}</span>
+                  <div style="display:flex;align-items:center;gap:8px;border-left:4px solid #C8FF00;padding-left:9px">
+                    <span style="font-family:'Unbounded',sans-serif;font-size:9px;font-weight:700;color:#C8FF00;background:#111111;border-radius:5px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex:0 0 auto">{{ f.rank }}</span>
                     <b style="font-size:10.5px;display:block;line-height:1.3">{{ f.name }}</b>
                   </div>
                 </sc-for>
-                <sc-if value="{{ hasTrainingNotes }}" hint-placeholder-val="{{ false }}">
-                  <div style="margin-top:4px;padding:8px 10px;background:#F5F7EF;border-radius:10px;font-size:9px;color:#333;line-height:1.5;white-space:pre-wrap">{{ trainingNotes }}</div>
-                </sc-if>
               </div>
             </div>
           </div>
@@ -610,7 +620,7 @@ class Component extends DCLogic {
     coach: 'Shubh',
     email: '',
     phone: '',
-    trainingNotes: '',
+    focusNotes: null,
     values: initValues(FORM_LIBRARY.hyrox_male),
     openSegmentId: null,
     openSegmentInitialized: false,
@@ -624,9 +634,14 @@ class Component extends DCLogic {
 
   setField(key, val){ this.setState({ [key]: val }); }
   setValue(id, val){ this.setState(s => ({ values: { ...s.values, [id]: val } })); }
-  changeForm(id){ this.setState({ formId: id, values: initValues(FORM_LIBRARY[id]), openSegmentId: null, openSegmentInitialized: false, checkedTests: {}, trainingNotes: '' }); }
+  changeForm(id){ this.setState({ formId: id, values: initValues(FORM_LIBRARY[id]), openSegmentId: null, openSegmentInitialized: false, checkedTests: {}, focusNotes: null }); }
   toggleCheck(id){ this.setState(s => ({ checkedTests: { ...s.checkedTests, [id]: !s.checkedTests[id] } })); }
   selectAllSegment(segId){ const form=FORM_LIBRARY[this.state.formId]; const ids=form.tests.filter(t=>t.segment===segId).map(t=>t.id); const allOn=ids.every(id=>!!this.state.checkedTests[id]); const upd={}; ids.forEach(id=>{upd[id]=!allOn;}); this.setState(s=>({checkedTests:{...s.checkedTests,...upd}})); }
+  _autoFocusNames(){ const form=FORM_LIBRARY[this.state.formId]; const tests=form.tests.map(t=>calcTest(t,this.state.values,form.asymmetryThreshold)); return tests.filter(t=>t.weight>0&&!!this.state.checkedTests[t.id]&&t.filled).slice().sort((a,b)=>a.score-b.score).slice(0,4).map(t=>t.name); }
+  editFocusItem(i,val){ const items=[...(this.state.focusNotes??this._autoFocusNames())]; items[i]=val; this.setState({focusNotes:items}); }
+  deleteFocusItem(i){ const items=(this.state.focusNotes??this._autoFocusNames()).filter((_,idx)=>idx!==i); this.setState({focusNotes:items}); }
+  addFocusItem(){ const items=[...(this.state.focusNotes??this._autoFocusNames()),''];this.setState({focusNotes:items}); }
+  resetFocus(){ this.setState({focusNotes:null}); }
 
   toggleSegment(segId, willOpen){
     this.setState({ openSegmentId: willOpen ? segId : null, openSegmentInitialized: true });
@@ -682,7 +697,7 @@ class Component extends DCLogic {
       coach: this.state.coach,
       email: this.state.email,
       phone: this.state.phone,
-      trainingNotes: this.state.trainingNotes,
+      focusNotes: this.state.focusNotes,
       values: this.state.values,
       checkedTests: this.state.checkedTests,
     };
@@ -713,7 +728,7 @@ class Component extends DCLogic {
       coach: this.state.coach,
       email: this.state.email,
       phone: this.state.phone,
-      trainingNotes: this.state.trainingNotes,
+      focusNotes: this.state.focusNotes,
       values: this.state.values,
       checkedTests: this.state.checkedTests,
     };
@@ -749,7 +764,7 @@ class Component extends DCLogic {
         coach: data.coach ?? this.state.coach,
         email: data.email ?? this.state.email,
         phone: data.phone ?? this.state.phone,
-        trainingNotes: data.trainingNotes ?? this.state.trainingNotes,
+        focusNotes: data.focusNotes ?? this.state.focusNotes,
         values: data.values || {},
         checkedTests: data.checkedTests || {},
       });
@@ -759,7 +774,7 @@ class Component extends DCLogic {
     }
   }
   saveLocal(){
-    const data = { form: this.state.formId, athlete: this.state.athlete, gender: this.state.gender, date: this.state.date, coach: this.state.coach, trainingNotes: this.state.trainingNotes, values: this.state.values, checkedTests: this.state.checkedTests };
+    const data = { form: this.state.formId, athlete: this.state.athlete, gender: this.state.gender, date: this.state.date, coach: this.state.coach, focusNotes: this.state.focusNotes, values: this.state.values, checkedTests: this.state.checkedTests };
     localStorage.setItem('stance_assessment_builder', JSON.stringify(data));
     alert('Saved locally in this browser.');
   }
@@ -767,7 +782,7 @@ class Component extends DCLogic {
     const raw = localStorage.getItem('stance_assessment_builder');
     if(!raw){ alert('No local save found.'); return; }
     const data = JSON.parse(raw);
-    this.setState({ formId: data.form || this.state.formId, athlete: data.athlete ?? this.state.athlete, gender: data.gender ?? this.state.gender, date: data.date ?? this.state.date, coach: data.coach ?? this.state.coach, trainingNotes: data.trainingNotes ?? this.state.trainingNotes, values: data.values || {}, checkedTests: data.checkedTests || {} });
+    this.setState({ formId: data.form || this.state.formId, athlete: data.athlete ?? this.state.athlete, gender: data.gender ?? this.state.gender, date: data.date ?? this.state.date, coach: data.coach ?? this.state.coach, focusNotes: data.focusNotes ?? this.state.focusNotes, values: data.values || {}, checkedTests: data.checkedTests || {} });
   }
 
   renderVals(){
@@ -817,7 +832,11 @@ class Component extends DCLogic {
     const asymList = tests.filter(t => !!checkedTests[t.id] && Number.isFinite(t.asym) && t.asym >= asymThreshold).sort((a,b)=>b.asym-a.asym).slice(0,4).map(t => ({ name: t.name, asymText: t.asym.toFixed(1)+'%' }));
     const hasAsym = asymList.length > 0;
     const noAsym = !hasAsym;
-    const focusList = constraints.slice(0,4).map((c, i) => ({ rank: i + 1, name: c.name }));
+    const focusNotes = this.state.focusNotes;
+    const autoFocusNames = constraints.slice(0,4).map(c => c.name);
+    const focusNames = focusNotes ?? autoFocusNames;
+    const focusList = focusNames.map((name, i) => ({ rank: i + 1, name }));
+    const focusEditorItems = focusNames.map((text, i) => ({ rank: i + 1, text, onChange: (e) => this.editFocusItem(i, e.target.value), onDelete: () => this.deleteFocusItem(i) }));
 
     const radarSegs = segs.filter(s => s.hasData);
     const hasRadarData = radarSegs.length > 0;
@@ -930,8 +949,7 @@ class Component extends DCLogic {
       phone: this.state.phone, onPhone: (e) => this.setField('phone', e.target.value),
       date: this.state.date, onDate: (e) => this.setField('date', e.target.value),
       coach: this.state.coach, onCoach: (e) => this.setField('coach', e.target.value),
-      trainingNotes: this.state.trainingNotes, onTrainingNotes: (e) => this.setField('trainingNotes', e.target.value),
-      hasTrainingNotes: (this.state.trainingNotes || '').trim().length > 0,
+      focusEditorItems, onAddFocusItem: () => this.addFocusItem(), onResetFocus: () => this.resetFocus(),
       formSegments,
       scrollContainerRef: (el) => { if(el) this.scrollEl = el; },
       formName: form.name, sport: form.sport || '', ageGroup: form.ageGroup || '',
