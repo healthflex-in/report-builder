@@ -11,10 +11,10 @@ async function seed() {
 
   const schemaDoc = {
     id: 'football_u15_16',
-    name: 'Football Readiness - U15/U16',
+    name: 'Football Readiness - U16',
     sport: 'Football',
     gender: 'Mixed',
-    ageGroup: 'U15-16',
+    ageGroup: 'U16',
     asymmetryThreshold: 10,
     scoreBand: { build: 50, develop: 70, ready: 85 },
     segments: [
