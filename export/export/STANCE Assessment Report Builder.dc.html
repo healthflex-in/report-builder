@@ -255,7 +255,11 @@
             <h1 style="font-family:'Unbounded',sans-serif;font-size:18px;line-height:1.2;margin:0 0 8px;font-weight:600">{{ overallHeadline }}</h1>
             <p style="margin:0;color:#E6E6E6;font-size:10.5px;max-width:520px;line-height:1.5">This report converts test data into a concise readiness profile across all assessed categories.</p>
             <div style="margin-top:14px">
-              <div style="display:flex;justify-content:space-between;font-size:8px;text-transform:uppercase;letter-spacing:.11em;color:#bbb;font-weight:800;margin-bottom:5px"><span>Build</span><span>Develop</span><span>Ready</span></div>
+              <div style="position:relative;height:14px;margin-bottom:5px;font-size:8px;text-transform:uppercase;letter-spacing:.11em;color:#bbb;font-weight:800">
+                <span style="position:absolute;left:0%;transform:translateX(0%)">Build</span>
+                <span style="position:absolute;left:70%;transform:translateX(-50%)">Develop</span>
+                <span style="position:absolute;left:85%;transform:translateX(-50%)">Ready</span>
+              </div>
               <div style="height:9px;border-radius:99px;background:linear-gradient(90deg,#E84A4A,#FFB020,#C8FF00);position:relative">
                 <span style="position:absolute;top:-5px;width:3px;height:19px;background:#fff;border-radius:3px;transform:translateX(-50%);left:{{ scaleMarkerLeft }}%"></span>
               </div>
