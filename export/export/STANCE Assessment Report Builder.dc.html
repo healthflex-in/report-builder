@@ -27,6 +27,15 @@
     }
   </style>
 </helmet>
+<sc-if value="{{ !schemasLoaded }}">
+  <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#E7EADF;flex-direction:column;gap:16px">
+    <div style="width:44px;height:44px;border-radius:12px;background:#111;display:flex;align-items:center;justify-content:center">
+      <img src="assets/logo-bolt.png" alt="STANCE" style="width:24px;height:auto;display:block" />
+    </div>
+    <div style="font-family:'Unbounded',sans-serif;font-size:12px;color:#697064;font-weight:600;letter-spacing:.05em">Loading assessment data…</div>
+  </div>
+</sc-if>
+<sc-if value="{{ schemasLoaded }}">
 <div class="stance-app" style="display:grid;grid-template-columns:410px 1fr;gap:18px;align-items:start;padding:18px;max-width:1700px;margin:0 auto">
 
   <aside class="stance-panel" style="background:#FFFFFF;border:1px solid #DDE2D5;border-radius:24px;box-shadow:0 14px 40px rgba(0,0,0,.08);overflow:hidden;position:sticky;top:18px;max-height:calc(100vh - 36px);display:flex;flex-direction:column">
@@ -481,6 +490,7 @@
 
   </main>
 </div>
+</sc-if>
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1700,&quot;height&quot;:1200},&quot;tileColumns&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;3&quot;,&quot;options&quot;:[&quot;3&quot;,&quot;4&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Report tiles&quot;},&quot;showTileMessage&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Report tiles&quot;},&quot;asymmetryThreshold&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:14,&quot;min&quot;:5,&quot;max&quot;:25,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Scoring&quot;},&quot;segmentsExpanded&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Form builder&quot;}}">
@@ -617,20 +627,21 @@ function radarGeometry(labels, values){
 
 class Component extends DCLogic {
   state = {
-    formId: 'hyrox_male',
-    athlete: 'Sarfraz Nawaz',
-    gender: 'Male',
-    date: '02-01-2025',
-    coach: 'Shubh',
+    formId: null,
+    athlete: '',
+    gender: '',
+    date: '',
+    coach: '',
     email: '',
     phone: '',
     focusNotes: null,
-    values: initValues(FORM_LIBRARY.hyrox_male),
+    values: {},
     openSegmentId: null,
     openSegmentInitialized: false,
     pdfLabel: 'Create PDF',
     _libVersion: 0,
     checkedTests: {},
+    schemasLoaded: false,
   };
 
   segmentEls = {};
@@ -664,20 +675,25 @@ class Component extends DCLogic {
     }, 60);
   }
   async componentDidMount(){
-    // Always sync schemas from MongoDB so the UI is never running stale hardcoded data.
-    fetch('/api/schema').then(r => r.ok ? r.json() : []).then(schemas => {
-      let changed = 0;
-      schemas.forEach(s => { if(s.id){ FORM_LIBRARY[s.id] = s; changed++; } });
-      if(!changed) return;
-      // Re-init values for the active form: add slots for any new tests, keep existing entries.
-      const curForm = FORM_LIBRARY[this.state.formId];
-      if(curForm){
-        this.setState(s => ({ _libVersion: s._libVersion + 1, values: { ...initValues(curForm), ...s.values } }));
-      } else {
-        this.setState(s => ({ _libVersion: s._libVersion + 1 }));
+    // 1. Fetch all schemas from MongoDB — this is the single source of truth.
+    //    We await it so autoload below always has schemas available.
+    try {
+      const res = await fetch('/api/schema');
+      const schemas = res.ok ? await res.json() : [];
+      schemas.forEach(s => { if(s.id){ FORM_LIBRARY[s.id] = s; } });
+      const ids = Object.keys(FORM_LIBRARY);
+      if(ids.length){
+        const resolvedId = FORM_LIBRARY[this.state.formId] ? this.state.formId : ids[0];
+        const form = FORM_LIBRARY[resolvedId];
+        this.setState(s => ({
+          schemasLoaded: true,
+          formId: resolvedId,
+          _libVersion: s._libVersion + 1,
+          values: { ...initValues(form), ...s.values },
+        }));
       }
-    }).catch(() => {});
-    // Auto-load a saved session when ?autoload=<id> is in the URL (used by PDF renderer too).
+    } catch(e) {}
+    // 2. Auto-load a saved session when ?autoload=<id> is in the URL (used by PDF renderer).
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('autoload');
     if(!sessionId) return;
@@ -799,6 +815,7 @@ class Component extends DCLogic {
   renderVals(){
     const formId = this.state.formId;
     const form = FORM_LIBRARY[formId];
+    if(!form) return { schemasLoaded: false, formOptions: [] };
     const values = this.state.values;
     const asymThreshold = this.props.asymmetryThreshold ?? form.asymmetryThreshold;
 
@@ -952,6 +969,7 @@ class Component extends DCLogic {
     }
 
     return {
+      schemasLoaded: true,
       formOptions: Object.values(FORM_LIBRARY).map(f => ({ id: f.id, name: f.name })),
       formId, onFormChange: (e) => this.changeForm(e.target.value),
       athlete: this.state.athlete, onAthlete: (e) => this.setField('athlete', e.target.value),
