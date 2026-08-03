@@ -2,8 +2,12 @@
   "name": "stance-report-builder",
   "version": "1.0.0",
   "main": "index.js",
+  "scripts": {
+    "dev": "node dev-server.js"
+  },
   "dependencies": {
     "dotenv": "^17.4.2",
+    "jsonwebtoken": "^9.0.3",
     "luxon": "^3.4.4",
     "mongodb": "^6.3.0"
   }

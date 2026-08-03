@@ -1,10 +1,12 @@
 const { getDb } = require('./_db');
+const { requireAuth } = require('./_auth');
 
 module.exports = async (req, res) => {
   const db = await getDb();
   const collection = db.collection('report-schema');
 
   if (req.method === 'GET') {
+    // Public read — needed for PDF renderer (?autoload=) without a user session.
     const { id } = req.query;
     try {
       if (id) {
@@ -16,11 +18,15 @@ module.exports = async (req, res) => {
       return res.status(200).json(docs);
     } catch (error) {
       console.error('MongoDB Schema Load Error:', error);
-      return res.status(500).json({ error: 'Failed to load schema' });
+      return res.status(500).json({
+        error: 'Failed to load schema',
+        detail: error.message,
+      });
     }
   }
 
   if (req.method === 'POST') {
+    if (!requireAuth(req, res)) return;
     try {
       const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       if (!data.id) return res.status(400).json({ error: 'Schema must have an id' });

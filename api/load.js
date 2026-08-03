@@ -1,4 +1,5 @@
 const { getDb } = require('./_db');
+const { requireAuth } = require('./_auth');
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
@@ -6,6 +7,13 @@ module.exports = async (req, res) => {
   }
 
   const { email, sessionId } = req.query;
+
+  // sessionId loads are used by the PDF renderer (?autoload=) — UUID is the gate.
+  // Email-based loads require a logged-in Stance user.
+  if (email && !sessionId) {
+    if (!requireAuth(req, res)) return;
+  }
+
   if (!email && !sessionId) {
     return res.status(400).json({ error: 'Email or sessionId is required' });
   }

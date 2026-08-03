@@ -1,10 +1,13 @@
 const { getDb } = require('./_db');
 const { randomUUID } = require('crypto');
+const { requireAuth } = require('./_auth');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  if (!requireAuth(req, res)) return;
 
   try {
     const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;

@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./form_library.js"></script>
 <script src="./support.js"></script>
+<script src="./auth.js"></script>
 </head>
 <body>
 <x-dc>
@@ -23,13 +24,62 @@
     summary::-webkit-details-marker{display:none}
     @media print{
       body{background:#fff}
-      .stance-panel,.stance-toolbar{display:none !important}
+      .stance-panel,.stance-toolbar,.stance-login{display:none !important}
       .stance-app{display:block !important;padding:0 !important}
       .stance-sheet{box-shadow:none !important;margin:0 auto !important;page-break-after:always}
     }
   </style>
 </helmet>
-<sc-if value="{{ !schemasLoaded }}">
+<sc-if value="{{ showLogin }}">
+  <div class="stance-login" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#E7EADF;padding:24px">
+    <div style="width:100%;max-width:400px;background:#fff;border:1px solid #DDE2D5;border-radius:24px;box-shadow:0 14px 40px rgba(0,0,0,.08);padding:28px;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:40px;height:40px;border-radius:12px;background:#111;display:flex;align-items:center;justify-content:center;overflow:hidden">
+          <img src="assets/logo-bolt.png" alt="STANCE" style="width:22px;height:auto;display:block" />
+        </div>
+        <div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:18px;font-weight:700;line-height:1">STANCE</div>
+          <div style="font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:#697064;font-weight:800;margin-top:4px">Report Builder</div>
+        </div>
+      </div>
+      <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:600">Sign in with email OTP</div>
+      <p style="margin:0;font-size:12px;color:#697064;line-height:1.45">Use your Stance account email. We'll send a one-time code.</p>
+
+      <sc-if value="{{ loginStepEmail }}">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Email</label>
+          <input value="{{ loginEmail }}" onChange="{{ onLoginEmail }}" type="email" placeholder="you@stance.health" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:12px;font-size:13px;outline:none" />
+          <button onClick="{{ sendOtp }}" disabled="{{ authBusy }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#111;color:#C8FF00;margin-top:4px">{{ sendOtpLabel }}</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ loginStepOtp }}">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;color:#697064">Code sent to <strong style="color:#111">{{ loginEmail }}</strong></div>
+          <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">OTP</label>
+          <input value="{{ loginOtp }}" onChange="{{ onLoginOtp }}" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:12px;font-size:13px;outline:none;letter-spacing:.2em" />
+          <button onClick="{{ verifyOtp }}" disabled="{{ authBusy }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#111;color:#C8FF00;margin-top:4px">{{ verifyOtpLabel }}</button>
+          <button onClick="{{ backToEmail }}" type="button" style="border:0;background:transparent;color:#697064;font-size:11px;cursor:pointer;padding:4px;text-align:left">Use a different email</button>
+          <button onClick="{{ sendOtp }}" type="button" disabled="{{ authBusy }}" style="border:0;background:transparent;color:#111;font-size:11px;cursor:pointer;padding:4px;text-align:left;font-weight:700">Resend code</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ authError }}">
+        <div style="background:#FDECEC;color:#B42318;border-radius:12px;padding:10px 12px;font-size:12px">{{ authError }}</div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ showSchemaError }}">
+  <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#E7EADF;padding:24px">
+    <div style="width:100%;max-width:420px;background:#fff;border:1px solid #DDE2D5;border-radius:24px;padding:28px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:600">Couldn’t load assessments</div>
+      <div style="font-size:12px;color:#697064;line-height:1.45">{{ schemaError }}</div>
+      <button onClick="{{ retrySchemas }}" style="border:0;border-radius:14px;padding:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;cursor:pointer;background:#111;color:#C8FF00;margin-top:4px">Retry</button>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ showLoading }}">
   <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#E7EADF;flex-direction:column;gap:16px">
     <div style="width:44px;height:44px;border-radius:12px;background:#111;display:flex;align-items:center;justify-content:center">
       <img src="assets/logo-bolt.png" alt="STANCE" style="width:24px;height:auto;display:block" />
@@ -47,12 +97,18 @@
         <div style="width:40px;height:40px;border-radius:12px;background:#111111;display:flex;align-items:center;justify-content:center;flex:0 0 auto;overflow:hidden">
           <img src="assets/logo-bolt.png" alt="STANCE" style="width:22px;height:auto;display:block" />
         </div>
-        <div>
+        <div style="flex:1 1 auto;min-width:0">
           <div style="font-family:'Unbounded',sans-serif;font-size:22px;letter-spacing:.02em;line-height:1;font-weight:700">STANCE</div>
           <div style="font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:#697064;font-weight:800;margin-top:4px">Recovery to Performance</div>
         </div>
+        <sc-if value="{{ showLogout }}">
+          <button onClick="{{ logout }}" type="button" style="border:1px solid #DDE2D5;background:#fff;border-radius:10px;padding:6px 10px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;color:#697064;flex:0 0 auto">Log out</button>
+        </sc-if>
       </div>
       <div style="margin:14px 0 0;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:600">Assessment Report Builder</div>
+      <sc-if value="{{ authUserEmail }}">
+        <div style="margin-top:6px;font-size:11px;color:#697064">Signed in as {{ authUserEmail }}</div>
+      </sc-if>
     </div>
 
     <div ref="{{ scrollContainerRef }}" style="padding:16px;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:12px;scrollbar-gutter:stable">
@@ -644,6 +700,16 @@ class Component extends DCLogic {
     _libVersion: 0,
     checkedTests: {},
     schemasLoaded: false,
+    authChecked: false,
+    isAuthenticated: false,
+    isAutoload: false,
+    loginStep: 'email',
+    loginEmail: '',
+    loginOtp: '',
+    otpToken: null,
+    authBusy: false,
+    authError: '',
+    schemaError: '',
   };
 
   segmentEls = {};
@@ -659,6 +725,160 @@ class Component extends DCLogic {
   deleteFocusItem(i){ const items=(this.state.focusNotes??this._autoFocusNames()).filter((_,idx)=>idx!==i); this.setState({focusNotes:items}); }
   addFocusItem(){ const items=[...(this.state.focusNotes??this._autoFocusNames()),''];this.setState({focusNotes:items}); }
   resetFocus(){ this.setState({focusNotes:null}); }
+
+  handleUnauthorized(){
+    if(this.state.isAutoload) return;
+    StanceAuth.clearAuth();
+    this.setState({
+      isAuthenticated: false,
+      schemasLoaded: false,
+      authChecked: true,
+      loginStep: 'email',
+      loginOtp: '',
+      otpToken: null,
+      authError: 'Session expired. Please sign in again.',
+    });
+  }
+
+  async apiFetch(url, options = {}){
+    const headers = StanceAuth.authHeaders(options.headers || {});
+    const res = await fetch(url, { ...options, headers });
+    if(res.status === 401 && !this.state.isAutoload){
+      this.handleUnauthorized();
+    }
+    return res;
+  }
+
+  logout(){
+    StanceAuth.logout();
+    this.setState({
+      isAuthenticated: false,
+      schemasLoaded: false,
+      authChecked: true,
+      loginStep: 'email',
+      loginOtp: '',
+      otpToken: null,
+      authError: '',
+      authBusy: false,
+    });
+  }
+
+  backToEmail(){
+    this.setState({ loginStep: 'email', loginOtp: '', otpToken: null, authError: '' });
+  }
+
+  async sendOtp(){
+    if(this.state.authBusy) return;
+    const email = (this.state.loginEmail || '').trim();
+    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      this.setState({ authError: 'Enter a valid email address.' });
+      return;
+    }
+    this.setState({ authBusy: true, authError: '' });
+    try {
+      const challenge = await StanceAuth.sendEmailOTP(email);
+      this.setState({
+        loginStep: 'otp',
+        otpToken: challenge.token,
+        loginOtp: '',
+        authBusy: false,
+      });
+    } catch(e) {
+      this.setState({
+        authBusy: false,
+        authError: e.message || 'Failed to send OTP. Use an existing Stance account email.',
+      });
+    }
+  }
+
+  async verifyOtp(){
+    if(this.state.authBusy) return;
+    const { loginEmail, loginOtp, otpToken } = this.state;
+    if(!otpToken){
+      this.setState({ authError: 'OTP session missing. Request a new code.' });
+      return;
+    }
+    if(!String(loginOtp || '').trim()){
+      this.setState({ authError: 'Enter the OTP from your email.' });
+      return;
+    }
+    this.setState({ authBusy: true, authError: '' });
+    try {
+      await StanceAuth.verifyEmailOTP(loginEmail, loginOtp, otpToken);
+      this.setState({
+        isAuthenticated: true,
+        authBusy: false,
+        loginStep: 'email',
+        loginOtp: '',
+        otpToken: null,
+      });
+      await this.loadSchemasAndSession();
+    } catch(e) {
+      this.setState({
+        authBusy: false,
+        authError: e.message || 'Invalid OTP. Please try again.',
+      });
+    }
+  }
+
+  async loadSchemasAndSession(){
+    this.setState({ schemaError: '' });
+    try {
+      const res = await this.apiFetch('/api/schema');
+      if(!res.ok){
+        const err = await res.json().catch(() => ({}));
+        this.setState({
+          schemasLoaded: false,
+          schemaError: err.error || err.detail || ('Failed to load schemas (' + res.status + '). Check MongoDB connection.'),
+        });
+        return;
+      }
+      const schemas = await res.json();
+      schemas.forEach(s => { if(s.id){ FORM_LIBRARY[s.id] = s; } });
+      const ids = Object.keys(FORM_LIBRARY);
+      if(ids.length){
+        const resolvedId = FORM_LIBRARY[this.state.formId] ? this.state.formId : ids[0];
+        const form = FORM_LIBRARY[resolvedId];
+        this.setState(s => ({
+          schemasLoaded: true,
+          schemaError: '',
+          formId: resolvedId,
+          _libVersion: s._libVersion + 1,
+          values: { ...initValues(form), ...s.values },
+        }));
+      } else {
+        this.setState({
+          schemasLoaded: false,
+          schemaError: 'No assessment schemas found in MongoDB (report-schema).',
+        });
+      }
+    } catch(e) {
+      this.setState({
+        schemasLoaded: false,
+        schemaError: e.message || 'Network error loading schemas',
+      });
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('autoload');
+    if(!sessionId) return;
+    try {
+      const res = await this.apiFetch('/api/load?sessionId=' + encodeURIComponent(sessionId));
+      if(!res.ok) return;
+      const data = await res.json();
+      this.setState({
+        formId: data.formId || this.state.formId,
+        athlete: data.athlete ?? this.state.athlete,
+        gender: data.gender ?? this.state.gender,
+        date: data.date ?? this.state.date,
+        coach: data.coach ?? this.state.coach,
+        email: data.email ?? this.state.email,
+        phone: data.phone ?? this.state.phone,
+        values: data.values || this.state.values,
+        checkedTests: data.checkedTests || {},
+      });
+    } catch(e) { /* silent — Puppeteer will still render whatever is loaded */ }
+  }
 
   toggleSegment(segId, willOpen){
     this.setState({ openSegmentId: willOpen ? segId : null, openSegmentInitialized: true });
@@ -677,44 +897,23 @@ class Component extends DCLogic {
     }, 60);
   }
   async componentDidMount(){
-    // 1. Fetch all schemas from MongoDB — this is the single source of truth.
-    //    We await it so autoload below always has schemas available.
-    try {
-      const res = await fetch('/api/schema');
-      const schemas = res.ok ? await res.json() : [];
-      schemas.forEach(s => { if(s.id){ FORM_LIBRARY[s.id] = s; } });
-      const ids = Object.keys(FORM_LIBRARY);
-      if(ids.length){
-        const resolvedId = FORM_LIBRARY[this.state.formId] ? this.state.formId : ids[0];
-        const form = FORM_LIBRARY[resolvedId];
-        this.setState(s => ({
-          schemasLoaded: true,
-          formId: resolvedId,
-          _libVersion: s._libVersion + 1,
-          values: { ...initValues(form), ...s.values },
-        }));
-      }
-    } catch(e) {}
-    // 2. Auto-load a saved session when ?autoload=<id> is in the URL (used by PDF renderer).
     const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('autoload');
-    if(!sessionId) return;
-    try {
-      const res = await fetch('/api/load?sessionId=' + encodeURIComponent(sessionId));
-      if(!res.ok) return;
-      const data = await res.json();
-      this.setState({
-        formId: data.formId || this.state.formId,
-        athlete: data.athlete ?? this.state.athlete,
-        gender: data.gender ?? this.state.gender,
-        date: data.date ?? this.state.date,
-        coach: data.coach ?? this.state.coach,
-        email: data.email ?? this.state.email,
-        phone: data.phone ?? this.state.phone,
-        values: data.values || this.state.values,
-        checkedTests: data.checkedTests || {},
-      });
-    } catch(e) { /* silent — Puppeteer will still render whatever is loaded */ }
+    const isAutoload = !!params.get('autoload');
+
+    // PDF renderer path: skip login (sessionId UUID is the access key).
+    if(isAutoload){
+      this.setState({ authChecked: true, isAuthenticated: true, isAutoload: true });
+      await this.loadSchemasAndSession();
+      return;
+    }
+
+    if(StanceAuth.isLoggedIn()){
+      this.setState({ authChecked: true, isAuthenticated: true });
+      await this.loadSchemasAndSession();
+      return;
+    }
+
+    this.setState({ authChecked: true, isAuthenticated: false });
   }
   async generatePdf(){
     this.setState({ pdfLabel: 'Generating…' });
@@ -731,9 +930,8 @@ class Component extends DCLogic {
       checkedTests: this.state.checkedTests,
     };
     try {
-      const res = await fetch('/api/pdf', {
+      const res = await this.apiFetch('/api/pdf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       const result = await res.json();
@@ -762,9 +960,8 @@ class Component extends DCLogic {
       checkedTests: this.state.checkedTests,
     };
     try {
-      const res = await fetch('/api/save', {
+      const res = await this.apiFetch('/api/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
       const result = await res.json();
@@ -778,9 +975,9 @@ class Component extends DCLogic {
     const email = prompt('Enter athlete email to load:', this.state.email);
     if(!email) return;
     try {
-      const res = await fetch('/api/load?email=' + encodeURIComponent(email));
+      const res = await this.apiFetch('/api/load?email=' + encodeURIComponent(email));
       if(!res.ok) {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({}));
         alert('Error: ' + (err.error || 'Not found'));
         return;
       }
@@ -817,7 +1014,34 @@ class Component extends DCLogic {
   renderVals(){
     const formId = this.state.formId;
     const form = FORM_LIBRARY[formId];
-    if(!form) return { schemasLoaded: false, formOptions: [] };
+    const user = typeof StanceAuth !== 'undefined' ? StanceAuth.getUser() : null;
+    const showLogin = this.state.authChecked && !this.state.isAuthenticated && !this.state.isAutoload;
+    const showSchemaError = this.state.authChecked && this.state.isAuthenticated && !!this.state.schemaError && !this.state.schemasLoaded;
+    const showLoading = !this.state.authChecked || (this.state.isAuthenticated && !this.state.schemasLoaded && !this.state.schemaError);
+    const authBase = {
+      showLogin,
+      showLoading,
+      showSchemaError,
+      schemaError: this.state.schemaError || '',
+      retrySchemas: () => this.loadSchemasAndSession(),
+      loginStepEmail: this.state.loginStep === 'email',
+      loginStepOtp: this.state.loginStep === 'otp',
+      loginEmail: this.state.loginEmail,
+      loginOtp: this.state.loginOtp,
+      onLoginEmail: (e) => this.setField('loginEmail', e.target.value),
+      onLoginOtp: (e) => this.setField('loginOtp', e.target.value),
+      sendOtp: () => this.sendOtp(),
+      verifyOtp: () => this.verifyOtp(),
+      backToEmail: () => this.backToEmail(),
+      authBusy: this.state.authBusy,
+      authError: this.state.authError || '',
+      sendOtpLabel: this.state.authBusy ? 'Sending…' : 'Send OTP',
+      verifyOtpLabel: this.state.authBusy ? 'Verifying…' : 'Verify & continue',
+      logout: () => this.logout(),
+      showLogout: this.state.isAuthenticated && !this.state.isAutoload,
+      authUserEmail: (user && user.email) || '',
+    };
+    if(!form) return { ...authBase, schemasLoaded: false, formOptions: [] };
     const values = this.state.values;
     const asymThreshold = this.props.asymmetryThreshold ?? form.asymmetryThreshold;
 
@@ -971,6 +1195,7 @@ class Component extends DCLogic {
     }
 
     return {
+      ...authBase,
       schemasLoaded: true,
       formOptions: Object.values(FORM_LIBRARY).map(f => ({ id: f.id, name: f.name })),
       formId, onFormChange: (e) => this.changeForm(e.target.value),
