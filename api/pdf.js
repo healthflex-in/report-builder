@@ -17,7 +17,8 @@ module.exports = async (req, res) => {
       createdAt: new Date().toISOString(),
     });
 
-    const reportUrl = `https://reports.stance.health/STANCE%20Assessment%20Report%20Builder.dc.html?autoload=${sessionId}`;
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
+    const reportUrl = `https://${host}/STANCE%20Assessment%20Report%20Builder.dc.html?autoload=${sessionId}`;
 
     const pdfRes = await fetch('https://devapi.stance.health/api/pdf/generate', {
       method: 'POST',
