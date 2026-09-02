@@ -19,6 +19,7 @@ const apiHandlers = {
   '/api/load': () => require('./api/load'),
   '/api/pdf': () => require('./api/pdf'),
   '/api/schema': () => require('./api/schema'),
+  '/api/scoring-logic': () => require('./api/scoring-logic'),
 };
 
 const MIME = {

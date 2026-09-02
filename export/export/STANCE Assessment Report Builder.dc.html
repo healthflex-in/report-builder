@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./form_library.js"></script>
+<script src="./scoring-engine.js"></script>
 <script src="./support.js"></script>
 <script src="./auth.js"></script>
 </head>
@@ -22,6 +23,21 @@
     input[type=number]{-moz-appearance:textfield}
     summary{list-style:none}
     summary::-webkit-details-marker{display:none}
+    /* Test explanation tooltip — positioned to the RIGHT of the icon, vertically centered */
+    .stance-tip{position:relative;display:inline-flex}
+    .stance-tip .stance-tip-box{
+      visibility:hidden;opacity:0;position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);
+      width:240px;background:#111111;color:#fff;font-family:'Montserrat',sans-serif;font-weight:500;font-size:11px;line-height:1.45;
+      padding:10px 12px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.22);z-index:50;text-transform:none;letter-spacing:normal;
+      transition:opacity .15s ease,visibility .15s ease;pointer-events:none;text-align:left
+    }
+    .stance-tip .stance-tip-box::after{
+      content:'';position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+      border:6px solid transparent;border-bottom-color:#111111
+    }
+    .stance-tip .stance-tip-title{display:block;font-family:'Unbounded',sans-serif;font-weight:600;font-size:10px;margin-bottom:4px;color:#C8FF00}
+    .stance-tip:hover .stance-tip-box{visibility:visible;opacity:1}
+    @media print{.stance-tip-box{display:none !important}}
     @media print{
       body{background:#fff}
       .stance-panel,.stance-toolbar,.stance-login{display:none !important}
@@ -128,30 +144,68 @@
       <div style="border:1px solid #DDE2D5;border-radius:18px;padding:14px;background:#fff">
         <h3 style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:600;margin:0 0 10px">Athlete details</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+
+          <!-- Athlete name -->
           <div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Athlete</label>
-            <input value="{{ athlete }}" onChange="{{ onAthlete }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
+            <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Athlete name</label>
+            <input value="{{ athlete }}" onChange="{{ onAthlete }}" placeholder="e.g. Rahul Sharma" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
           </div>
+
+          <!-- Gender dropdown -->
           <div style="display:flex;flex-direction:column;gap:5px">
             <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Gender</label>
-            <input value="{{ gender }}" onChange="{{ onGender }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
+            <select value="{{ gender }}" onChange="{{ onGender }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none;cursor:pointer;color:{{ gender ? '#111' : '#697064' }}">
+              <option value="" disabled>Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Date</label>
-            <input value="{{ date }}" onChange="{{ onDate }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
+
+          <!-- Date (native date picker, full width) -->
+          <div style="display:flex;flex-direction:column;gap:5px;grid-column:span 2">
+            <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Assessment date</label>
+            <input type="date" value="{{ date }}" onChange="{{ onDate }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none;cursor:pointer" />
           </div>
+
+          <!-- Coach -->
           <div style="display:flex;flex-direction:column;gap:5px">
             <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Coach</label>
-            <input value="{{ coach }}" onChange="{{ onCoach }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
+            <input value="{{ coach }}" onChange="{{ onCoach }}" placeholder="Coach full name" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
           </div>
+
+          <!-- Phone with 10-digit validation -->
           <div style="display:flex;flex-direction:column;gap:5px">
             <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Phone</label>
-            <input value="{{ phone }}" onChange="{{ onPhone }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
+            <input
+              type="tel"
+              value="{{ phone }}"
+              onChange="{{ onPhone }}"
+              placeholder="10-digit mobile number"
+              maxlength="10"
+              inputmode="numeric"
+              style="width:100%;border:1px solid {{ phoneError ? '#E84A4A' : '#DDE2D5' }};background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none"
+            />
+            <sc-if value="{{ phoneError }}">
+              <span style="font-size:9px;color:#E84A4A;font-weight:700;margin-top:1px">{{ phoneError }}</span>
+            </sc-if>
           </div>
-          <div style="display:flex;flex-direction:column;gap:5px">
+
+          <!-- Email with format validation, full width -->
+          <div style="display:flex;flex-direction:column;gap:5px;grid-column:span 2">
             <label style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800">Email</label>
-            <input value="{{ email }}" onChange="{{ onEmail }}" style="width:100%;border:1px solid #DDE2D5;background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none" />
+            <input
+              type="email"
+              value="{{ email }}"
+              onChange="{{ onEmail }}"
+              placeholder="athlete@example.com"
+              style="width:100%;border:1px solid {{ emailError ? '#E84A4A' : '#DDE2D5' }};background:#FAFBF6;border-radius:12px;padding:10px;font-size:12px;outline:none"
+            />
+            <sc-if value="{{ emailError }}">
+              <span style="font-size:9px;color:#E84A4A;font-weight:700;margin-top:1px">{{ emailError }}</span>
+            </sc-if>
           </div>
+
         </div>
       </div>
 
@@ -167,12 +221,18 @@
           </summary>
           <div style="padding:12px;display:flex;flex-direction:column">
             <sc-for list="{{ seg.tests }}" as="t" hint-placeholder-count="4">
-              <div style="display:grid;grid-template-columns:34px 1fr;gap:10px;border-bottom:1px solid #EDF0E7;padding:11px 0">
+              <div style="display:grid;grid-template-columns:34px 1fr;gap:10px;border-bottom:1px solid #EDF0E7;padding:11px 0;opacity:{{ t.inputDisabled ? '0.5' : '1' }};transition:opacity .2s">
                 <div style="width:32px;height:32px;border-radius:10px;background:#ECFF99;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:8px;font-weight:700;flex:0 0 auto">{{ t.icon }}</div>
                 <div style="min-width:0">
                   <div style="font-weight:800;font-size:12px;display:flex;align-items:center;gap:6px">
                     <span>{{ t.name }}</span>
-                    <span title="{{ t.explanation }}" style="width:16px;height:16px;border-radius:50%;background:#111111;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;line-height:1;flex:0 0 auto;cursor:help">i</span>
+                    <span class="stance-tip" style="flex:0 0 auto">
+                      <span style="width:16px;height:16px;border-radius:50%;background:#111111;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;line-height:1;cursor:pointer">i</span>
+                      <span class="stance-tip-box">
+                        <span class="stance-tip-title">Why this test?</span>
+                        {{ t.explanation }}
+                      </span>
+                    </span>
                     <label style="margin-left:auto;display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;color:#697064;font-weight:700;flex:0 0 auto;user-select:none">
                       <input type="checkbox" checked="{{ t.checked }}" onChange="{{ t.onToggleCheck }}" style="width:14px;height:14px;cursor:pointer;accent-color:#111" />
                       Show
@@ -180,15 +240,31 @@
                   </div>
                   <div style="font-size:10px;color:#697064;margin-top:2px">Target: {{ t.normTextStr }} • Weight: {{ t.weight }}</div>
 
+                  <sc-if value="{{ t.hasScoreScale }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:5px">
+                      <div style="font-size:8px;text-transform:uppercase;letter-spacing:.09em;color:#8a9080;font-weight:800;margin-bottom:4px">Score scale</div>
+                      <div style="display:flex;flex-wrap:wrap;gap:3px">
+                        <sc-for list="{{ t.scoreScaleItems }}" as="sp" hint-placeholder-count="6">
+                          <span style="display:inline-flex;align-items:center;gap:3px;background:#F1F3EC;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;white-space:nowrap">
+                            <span style="color:#697064">{{ sp.value }}</span>
+                            <span style="color:#8a9080;font-size:7.5px">→</span>
+                            <span style="font-family:'Unbounded',sans-serif;font-size:7.5px;color:#111;font-weight:700">{{ sp.score }}</span>
+                          </span>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-if>
+
+
                   <sc-if value="{{ t.isBilateral }}" hint-placeholder-val="{{ true }}">
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
                       <div>
                         <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Left</div>
-                        <input type="number" step="any" value="{{ t.leftVal }}" onChange="{{ t.onLeft }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%" />
+                        <input type="number" step="any" value="{{ t.leftVal }}" onChange="{{ t.onLeft }}" disabled="{{ t.inputDisabled }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%" />
                       </div>
                       <div>
                         <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Right</div>
-                        <input type="number" step="any" value="{{ t.rightVal }}" onChange="{{ t.onRight }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%" />
+                        <input type="number" step="any" value="{{ t.rightVal }}" onChange="{{ t.onRight }}" disabled="{{ t.inputDisabled }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%" />
                       </div>
                       <div>
                         <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Unit</div>
@@ -201,7 +277,7 @@
                     <div style="display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px;max-width:220px">
                       <div>
                         <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Result</div>
-                        <select value="{{ t.overallVal }}" onChange="{{ t.onOverallSelect }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%">
+                        <select value="{{ t.overallVal }}" onChange="{{ t.onOverallSelect }}" disabled="{{ t.inputDisabled }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%">
                           <option value="">— select —</option>
                           <option value="Negative">Negative</option>
                           <option value="Positive">Positive</option>
@@ -214,7 +290,7 @@
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
                       <div>
                         <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Result</div>
-                        <input type="number" step="any" value="{{ t.overallVal }}" onChange="{{ t.onOverallNumber }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%" />
+                        <input type="number" step="any" value="{{ t.overallVal }}" onChange="{{ t.onOverallNumber }}" disabled="{{ t.inputDisabled }}" style="border:1px solid #DDE2D5;background:#FAFBF6;border-radius:10px;padding:8px;font-size:12px;width:100%" />
                       </div>
                       <div>
                         <div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#697064;font-weight:800;margin-bottom:4px">Unit</div>
@@ -335,6 +411,7 @@
           </div>
         </section>
 
+        <sc-if value="{{ reportShowRadar }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;justify-content:space-between;align-items:flex-end;margin:0 0 8px">
           <h2 style="font-family:'Unbounded',sans-serif;font-size:13px;margin:0;font-weight:600">Readiness map</h2>
         </div>
@@ -381,7 +458,9 @@
           </div>
         </div>
         </sc-if>
+        </sc-if>
 
+        <sc-if value="{{ reportShowKeyConstraints }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;justify-content:space-between;align-items:flex-end;margin:14px 0 8px">
           <h2 style="font-family:'Unbounded',sans-serif;font-size:13px;margin:0;font-weight:600">Key constraints</h2>
           <p style="font-size:10px;color:#697064;margin:0">Lowest scoring tests + asymmetry watchlist</p>
@@ -402,6 +481,7 @@
             </sc-for>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-if value="{{ reportShowAsymmetryWatchlist }}" hint-placeholder-val="{{ true }}">
             <div style="background:#fff;border:1px solid #DDE2D5;border-radius:18px;padding:12px">
               <span style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#697064;font-size:7.5px;font-weight:800;margin-bottom:6px">Asymmetry watchlist</span>
               <div style="display:flex;flex-direction:column;gap:7px">
@@ -421,6 +501,8 @@
                 </sc-if>
               </div>
             </div>
+            </sc-if>
+            <sc-if value="{{ reportShowTrainingFocus }}" hint-placeholder-val="{{ true }}">
             <div style="background:#fff;border:1px solid #DDE2D5;border-radius:18px;padding:12px">
               <span style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#697064;font-size:7.5px;font-weight:800;margin-bottom:6px">Next training focus</span>
               <div style="display:flex;flex-direction:column;gap:8px">
@@ -431,8 +513,10 @@
                 </sc-for>
               </div>
             </div>
+            </sc-if>
           </div>
         </div>
+        </sc-if>
       </div>
 
       <div style="position:relative;z-index:1;border-top:1px solid #DDE2D5;padding-top:8px;margin-top:12px;display:flex;justify-content:space-between;color:#697064;font-size:8px">
@@ -441,6 +525,7 @@
       </div>
     </section>
 
+    <sc-if value="{{ reportShowSegmentReadiness }}" hint-placeholder-val="{{ true }}">
     <sc-for list="{{ segPages }}" as="p" hint-placeholder-count="2">
       <section class="stance-sheet" data-screen-label="Page {{ p.label }}" style="width:210mm;height:297mm;margin:0 auto 18px;background:#F7F8F2;box-shadow:0 22px 70px rgba(0,0,0,.16);position:relative;overflow:hidden;padding:13mm 15mm;display:flex;flex-direction:column">
         <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(17,17,17,.032) 1px,transparent 1px),linear-gradient(90deg,rgba(17,17,17,.032) 1px,transparent 1px);background-size:20px 20px;pointer-events:none"></div>
@@ -518,10 +603,10 @@
                         <span style="text-transform:uppercase;letter-spacing:.1em;font-weight:800">{{ t.norm.midLabel }}</span>
                         <span style="text-transform:uppercase;letter-spacing:.1em;font-weight:800">{{ t.norm.rightLabel }}</span>
                       </div>
-                      <div style="position:relative;height:6px;border-radius:99px;background:#E8ECD7">
-                        <span style="position:absolute;top:0;height:100%;border-radius:99px;background:linear-gradient(90deg,#fff2bb,#ddff77);left:{{ t.norm.bandLeft }}%;width:{{ t.norm.bandWidth }}%"></span>
+                      <div style="position:relative;height:6px;border-radius:99px;background:{{ t.norm.barGradient }}">
+                        <span style="position:absolute;top:0;height:100%;border-radius:99px;background:rgba(255,255,255,0.28);left:{{ t.norm.bandLeft }}%;width:{{ t.norm.bandWidth }}%"></span>
                         <sc-if value="{{ t.norm.hasMarker }}" hint-placeholder-val="{{ true }}">
-                          <span style="position:absolute;top:-3px;width:2px;height:12px;border-radius:3px;transform:translateX(-50%);left:{{ t.norm.markerLeft }}%;background:{{ t.norm.markerColor }}"></span>
+                          <span style="position:absolute;top:-3px;width:2px;height:12px;border-radius:3px;transform:translateX(-50%);left:{{ t.norm.markerLeft }}%;background:#fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.35)"></span>
                         </sc-if>
                       </div>
                     </div>
@@ -545,6 +630,7 @@
         </div>
       </section>
     </sc-for>
+    </sc-if>
 
   </main>
 </div>
@@ -562,7 +648,7 @@ const STATUS_COLORS = {
   pending: {bg:'#EEF1E8', fg:'#697064', label:'NOT ASSESSED'}
 };
 
-function statusKey(score){ if(score>=85) return 'good'; if(score>=70) return 'ok'; if(score>=50) return 'warn'; return 'bad'; }
+function statusKey(score, scoreBand){ const sb = scoreBand || {build:50, develop:70, ready:85}; if(score>=sb.ready) return 'good'; if(score>=sb.develop) return 'ok'; if(score>=sb.build) return 'warn'; return 'bad'; }
 function isLowerBetter(t){ return String(t.unit).toLowerCase().includes('second') || (Number(t.max) < Number(t.min)); }
 function valueScore(v,min,max,lowerBetter){
   v=Number(v); min=Number(min); max=Number(max);
@@ -571,11 +657,11 @@ function valueScore(v,min,max,lowerBetter){
     let low=Math.min(min,max), high=Math.max(min,max);
     if(v<=low) return 100;
     if(v<=high) return 70 + (high-v)/(high-low)*30;
-    return Math.max(30,70 - ((v-high)/(Math.abs(high)||1))*40);
+    return Math.max(50,70 - ((v-high)/(Math.abs(high)||1))*40);
   } else {
     if(v>=max) return 100;
     if(v>=min) return 70 + (v-min)/(max-min)*30;
-    return Math.max(30,70 - ((min-v)/(Math.abs(min)||1))*40);
+    return Math.max(50,70 - ((min-v)/(Math.abs(min)||1))*40);
   }
 }
 function shortFmt(v){ if(v===null||v===undefined||v==='') return '—'; let n=Number(v); return Number.isFinite(n)?(Math.abs(n-Math.round(n))<.05?String(Math.round(n)):n.toFixed(1)):String(v); }
@@ -604,9 +690,8 @@ function getVal(values, id){
   const n = Number(v);
   return Number.isFinite(n) ? n : v;
 }
-function calcTest(t, values, asymThreshold){
+function calcTest(t, values, asymThreshold, scoringDoc){
   const type = t.type || '';
-  const lower = isLowerBetter(t);
   const left = getVal(values, t.id+'_left');
   const right = getVal(values, t.id+'_right');
   const overallRaw = values[t.id+'_overall'];
@@ -618,8 +703,9 @@ function calcTest(t, values, asymThreshold){
     const leftEntered = left!==null && Number.isFinite(Number(left));
     const rightEntered = right!==null && Number.isFinite(Number(right));
     filled = leftEntered || rightEntered;
-    const ls = leftEntered ? valueScore(left, t.min, t.max, lower) : null;
-    const rs = rightEntered ? valueScore(right, t.min, t.max, lower) : null;
+    // Use ScoringEngine if available, fall back to legacy valueScore
+    const ls = leftEntered ? (scoringDoc ? ScoringEngine.scoreValue(t.id, left, scoringDoc) : valueScore(left, t.min, t.max, isLowerBetter(t))) : null;
+    const rs = rightEntered ? (scoringDoc ? ScoringEngine.scoreValue(t.id, right, scoringDoc) : valueScore(right, t.min, t.max, isLowerBetter(t))) : null;
     if(leftEntered && rightEntered){
       result = (Number(left)+Number(right))/2;
       const mx = Math.max(Math.abs(Number(left)), Math.abs(Number(right)));
@@ -628,21 +714,23 @@ function calcTest(t, values, asymThreshold){
     const vals = [ls,rs].filter(x=>x!==null);
     sc = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
     if(type.includes('with Asym') && asym!==null && asym>asymThreshold && sc!==null){
-      sc = Math.max(30, sc * Math.max(.35, 1-((asym-asymThreshold)/100*3.2)));
+      sc = Math.max(50, sc * Math.max(.5, 1-((asym-asymThreshold)/100*3.2)));
     }
   } else if(t.min===null && t.max===null){
     const chosen = (overallRaw !== '' && overallRaw != null) ? overallRaw : null;
     filled = !!chosen;
     result = chosen || '—';
-    sc = filled ? ((String(result).toLowerCase()==='negative') ? 100 : 30) : null;
+    // Use ScoringEngine for categorical scoring
+    sc = filled ? (scoringDoc ? ScoringEngine.scoreValue(t.id, result, scoringDoc) : ((String(result).toLowerCase()==='negative') ? 100 : 50)) : null;
   } else {
     const entered = overall!==null && Number.isFinite(Number(overall));
     filled = entered;
     result = entered ? overall : null;
-    sc = entered ? valueScore(overall, t.min, t.max, lower) : null;
+    // Use ScoringEngine for interpolation scoring
+    sc = entered ? (scoringDoc ? ScoringEngine.scoreValue(t.id, overall, scoringDoc) : valueScore(overall, t.min, t.max, isLowerBetter(t))) : null;
   }
   const hasScore = sc!==null && Number.isFinite(sc);
-  sc = hasScore ? Math.max(0, Math.min(100, sc)) : null;
+  sc = hasScore ? Math.max(50, Math.min(100, sc)) : null;
   return {...t, left, right, overall: (overall ?? result), result, score: sc, asym, filled: filled && hasScore};
 }
 function normBarData(t){
@@ -692,6 +780,8 @@ class Component extends DCLogic {
     coach: '',
     email: '',
     phone: '',
+    phoneError: '',
+    emailError: '',
     focusNotes: null,
     values: {},
     openSegmentId: null,
@@ -710,17 +800,43 @@ class Component extends DCLogic {
     authBusy: false,
     authError: '',
     schemaError: '',
+    scoringDoc: null,
   };
 
   segmentEls = {};
   scrollEl = null;
 
   setField(key, val){ this.setState({ [key]: val }); }
+  onPhoneChange(val){
+    // Allow only digits, max 10
+    const digits = val.replace(/\D/g, '').slice(0, 10);
+    const err = digits.length > 0 && digits.length < 10 ? 'Phone number must be exactly 10 digits.' : '';
+    this.setState({ phone: digits, phoneError: err });
+  }
+  onEmailChange(val){
+    const err = val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ? 'Please enter a valid email address.' : '';
+    this.setState({ email: val, emailError: err });
+  }
   setValue(id, val){ this.setState(s => ({ values: { ...s.values, [id]: val } })); }
-  changeForm(id){ this.setState({ formId: id, values: initValues(FORM_LIBRARY[id]), openSegmentId: null, openSegmentInitialized: false, checkedTests: {}, focusNotes: null }); }
+  changeForm(id){ this.setState({ formId: id, values: initValues(FORM_LIBRARY[id]), openSegmentId: null, openSegmentInitialized: false, checkedTests: {}, focusNotes: null }); this.loadScoringLogic(id); }
+  async loadScoringLogic(schemaId){
+    try {
+      const res = await this.apiFetch('/api/scoring-logic?schemaId=' + encodeURIComponent(schemaId));
+      if(res.ok){
+        const doc = await res.json();
+        this.setState({ scoringDoc: doc });
+      } else {
+        // No scoring logic found — fall back to legacy inline scoring
+        this.setState({ scoringDoc: null });
+      }
+    } catch(e){
+      console.warn('Could not load scoring logic for', schemaId, e.message);
+      this.setState({ scoringDoc: null });
+    }
+  }
   toggleCheck(id){ this.setState(s => ({ checkedTests: { ...s.checkedTests, [id]: !s.checkedTests[id] } })); }
   selectAllSegment(segId){ const form=FORM_LIBRARY[this.state.formId]; const ids=form.tests.filter(t=>t.segment===segId).map(t=>t.id); const allOn=ids.every(id=>!!this.state.checkedTests[id]); const upd={}; ids.forEach(id=>{upd[id]=!allOn;}); this.setState(s=>({checkedTests:{...s.checkedTests,...upd}})); }
-  _autoFocusNames(){ const form=FORM_LIBRARY[this.state.formId]; const tests=form.tests.map(t=>calcTest(t,this.state.values,form.asymmetryThreshold)); return tests.filter(t=>t.weight>0&&!!this.state.checkedTests[t.id]&&t.filled).slice().sort((a,b)=>a.score-b.score).slice(0,4).map(t=>t.name); }
+  _autoFocusNames(){ const form=FORM_LIBRARY[this.state.formId]; const tests=form.tests.map(t=>calcTest(t,this.state.values,form.asymmetryThreshold,this.state.scoringDoc)); return tests.filter(t=>t.weight>0&&!!this.state.checkedTests[t.id]&&t.filled).slice().sort((a,b)=>a.score-b.score).slice(0,4).map(t=>t.name); }
   editFocusItem(i,val){ const items=[...(this.state.focusNotes??this._autoFocusNames())]; items[i]=val; this.setState({focusNotes:items}); }
   deleteFocusItem(i){ const items=(this.state.focusNotes??this._autoFocusNames()).filter((_,idx)=>idx!==i); this.setState({focusNotes:items}); }
   addFocusItem(){ const items=[...(this.state.focusNotes??this._autoFocusNames()),''];this.setState({focusNotes:items}); }
@@ -846,6 +962,8 @@ class Component extends DCLogic {
           _libVersion: s._libVersion + 1,
           values: { ...initValues(form), ...s.values },
         }));
+        // Load scoring logic for the selected schema
+        this.loadScoringLogic(resolvedId);
       } else {
         this.setState({
           schemasLoaded: false,
@@ -1045,7 +1163,8 @@ class Component extends DCLogic {
     const values = this.state.values;
     const asymThreshold = this.props.asymmetryThreshold ?? form.asymmetryThreshold;
 
-    const tests = form.tests.map(t => calcTest(t, values, asymThreshold));
+    const scoringDoc = this.state.scoringDoc;
+    const tests = form.tests.map(t => calcTest(t, values, asymThreshold, scoringDoc));
     const checkedTests = this.state.checkedTests;
 
     // Two-level scoring:
@@ -1058,7 +1177,7 @@ class Component extends DCLogic {
       const w = wtd.reduce((a,t)=>a+Number(t.weight),0);
       const hasData = w > 0;
       const score = hasData ? wtd.reduce((a,t)=>a+t.score*Number(t.weight),0)/w : 0;
-      const colors = hasData ? STATUS_COLORS[statusKey(score)] : STATUS_COLORS.pending;
+      const colors = hasData ? STATUS_COLORS[statusKey(score, form.scoreBand)] : STATUS_COLORS.pending;
       const catW = Number(s.categoryWeight) || 0;
       return { ...s, tests: segTests, score, scoreRound: hasData ? Math.round(score) : null, scoreDisplay: hasData ? String(Math.round(score)) : '—', hasData, statusLabel: colors.label, statusLower: colors.label.toLowerCase(), pillBg: colors.bg, pillFg: colors.fg, categoryWeight: catW };
     });
@@ -1074,12 +1193,12 @@ class Component extends DCLogic {
       const fw = flatW.reduce((a,t)=>a+Number(t.weight),0);
       overall = fw ? flatW.reduce((a,t)=>a+t.score*Number(t.weight),0)/fw : 0;
     }
-    const overallKey = statusKey(overall);
+    const overallKey = statusKey(overall, form.scoreBand);
     const overallColors = STATUS_COLORS[overallKey];
     const circ = 2*Math.PI*44;
 
-    const constraints = tests.filter(t => t.weight > 0 && !!checkedTests[t.id] && t.filled).slice().sort((a,b)=>a.score-b.score).slice(0,5).map((t,i) => {
-      const colors = STATUS_COLORS[statusKey(t.score)];
+    const constraints = tests.filter(t => t.weight > 0 && !!checkedTests[t.id] && t.filled).slice().sort((a,b)=>a.score-b.score).slice(0, (form.report && form.report.maxKeyConstraints) || 5).map((t,i) => {
+      const colors = STATUS_COLORS[statusKey(t.score, form.scoreBand)];
       return { rank: i+1, icon: t.icon, name: t.name, explanation: t.explanation, score: t.score, scoreRound: Math.round(t.score), pillBg: colors.bg, pillFg: colors.fg };
     });
 
@@ -1087,7 +1206,8 @@ class Component extends DCLogic {
     const hasAsym = asymList.length > 0;
     const noAsym = !hasAsym;
     const focusNotes = this.state.focusNotes;
-    const autoFocusNames = constraints.slice(0,4).map(c => c.name);
+    const maxFocusItems = (form.report && form.report.maxTrainingFocusItems) || 4;
+    const autoFocusNames = constraints.slice(0, maxFocusItems).map(c => c.name);
     const focusNames = focusNotes ?? autoFocusNames;
     const focusList = focusNames.map((name, i) => ({ rank: i + 1, name }));
     const focusEditorItems = focusNames.map((text, i) => ({ rank: i + 1, text, onChange: (e) => this.editFocusItem(i, e.target.value), onDelete: () => this.deleteFocusItem(i) }));
@@ -1107,6 +1227,22 @@ class Component extends DCLogic {
         const isBilateral = type.includes('Bilateral');
         const isSelectType = !isBilateral && (t.min === null && t.max === null);
         const isNumberType = !isBilateral && !isSelectType;
+
+        // ── Score scale from scoring logic ──────────────────────────────────────
+        const rule = scoringDoc ? ScoringEngine.getRule(t.id, scoringDoc) : null;
+        let scoreScaleItems = [];
+        let scoreScaleMethod = rule ? rule.method : null;
+        if (rule && rule.method === 'interpolate' && rule.scale) {
+          // Sort by score ascending (50→100)
+          const sorted = [...rule.scale].sort((a, b) => a.score - b.score);
+          scoreScaleItems = sorted.map(pt => ({ value: shortFmt(pt.value), score: pt.score }));
+        } else if (rule && rule.method === 'categorical' && rule.categories) {
+          scoreScaleItems = Object.entries(rule.categories).map(([k, v]) => ({ value: k, score: v })).sort((a, b) => a.score - b.score);
+        }
+        const hasScoreScale = scoreScaleItems.length > 0;
+        const scoreScaleDirection = rule ? rule.direction : null;
+        const scoreScaleUnit = (rule && rule.unit) || t.unit || '';
+
         return {
           id: t.id, name: t.name, icon: t.icon, explanation: t.explanation, weight: t.weight || 0,
           unit: t.unit || '', normTextStr: normText(t),
@@ -1115,11 +1251,13 @@ class Component extends DCLogic {
           rightVal: values[t.id+'_right'] ?? '',
           overallVal: values[t.id+'_overall'] ?? '',
           checked: !!this.state.checkedTests[t.id],
+          inputDisabled: !this.state.checkedTests[t.id],
           onLeft: (e)=>this.setValue(t.id+'_left', e.target.value),
           onRight: (e)=>this.setValue(t.id+'_right', e.target.value),
           onOverallNumber: (e)=>this.setValue(t.id+'_overall', e.target.value),
           onOverallSelect: (e)=>this.setValue(t.id+'_overall', e.target.value),
           onToggleCheck: ()=>this.toggleCheck(t.id),
+          hasScoreScale, scoreScaleItems, scoreScaleMethod, scoreScaleDirection, scoreScaleUnit,
         };
       });
       return {
@@ -1136,16 +1274,27 @@ class Component extends DCLogic {
     const showTileMessage = this.props.showTileMessage ?? false;
     const segBlocks = segs.map(s => {
       const filledTiles = s.tests.filter(t => !!checkedTests[t.id] && t.filled).map(t => {
-        const colors = STATUS_COLORS[statusKey(t.score)];
+        const colors = STATUS_COLORS[statusKey(t.score, form.scoreBand)];
         const isBilateral = (t.type||'').includes('Bilateral');
         const resultText = isBilateral ? `${shortFmt(t.left)} / ${shortFmt(t.right)} ${t.unit||''}`.trim() : fmt(t.result, t.unit);
         const hasAsymVal = Number.isFinite(t.asym);
+
+        // ── Direction-aware bar gradient ──────────────────────────────────────
+        // Prefer the direction from the scoring logic doc; fall back to the
+        // legacy isLowerBetter() heuristic on the schema test object.
+        const tileRule = scoringDoc ? ScoringEngine.getRule(t.id, scoringDoc) : null;
+        const tileDir  = tileRule ? tileRule.direction : (isLowerBetter(t) ? 'lower' : 'higher');
+        const barGradient = tileDir === 'lower'
+          ? 'linear-gradient(90deg,#C8FF00 0%,#9BDF00 20%,#FFB020 55%,#E84A4A 85%,#E84A4A 100%)'
+          : 'linear-gradient(90deg,#E84A4A 0%,#E84A4A 15%,#FFB020 45%,#9BDF00 80%,#C8FF00 100%)';
+
+        const normData = normBarData(t);
         return {
           icon: t.icon, name: t.name, category: (t.category||'').replace(' Tests',''),
           score: t.score, scoreDisplay: String(Math.round(t.score)), pillBg: colors.bg, pillFg: colors.fg, statusLabel: colors.label,
           message: t.explanation, showMessage: showTileMessage, resultText,
           hasAsym: hasAsymVal, asymText: hasAsymVal ? `Asym ${t.asym.toFixed(1)}%` : '',
-          norm: normBarData(t)
+          norm: { ...normData, barGradient }
         };
       });
       return { abbr: s.abbr, title: s.title, summary: s.summary, scoreRound: s.scoreRound, scoreDisplay: s.scoreDisplay, statusLower: s.statusLower, tiles: filledTiles };
@@ -1201,8 +1350,10 @@ class Component extends DCLogic {
       formId, onFormChange: (e) => this.changeForm(e.target.value),
       athlete: this.state.athlete, onAthlete: (e) => this.setField('athlete', e.target.value),
       gender: this.state.gender, onGender: (e) => this.setField('gender', e.target.value),
-      email: this.state.email, onEmail: (e) => this.setField('email', e.target.value),
-      phone: this.state.phone, onPhone: (e) => this.setField('phone', e.target.value),
+      email: this.state.email, onEmail: (e) => this.onEmailChange(e.target.value),
+      emailError: this.state.emailError || '',
+      phone: this.state.phone, onPhone: (e) => this.onPhoneChange(e.target.value),
+      phoneError: this.state.phoneError || '',
       date: this.state.date, onDate: (e) => this.setField('date', e.target.value),
       coach: this.state.coach, onCoach: (e) => this.setField('coach', e.target.value),
       focusEditorItems, onAddFocusItem: () => this.addFocusItem(), onResetFocus: () => this.resetFocus(),
@@ -1214,6 +1365,11 @@ class Component extends DCLogic {
       dashArray: circ.toFixed(1), dashOffset: (circ*(1-overall/100)).toFixed(1),
       scaleMarkerLeft: Math.max(0, Math.min(100, overall)),
       segs, radarSegs, radar, hasRadarData, constraints, asymList, hasAsym, noAsym, focusList, segBlocks, segPages, tileColumns,
+      reportShowRadar: form.report ? form.report.showRadar !== false : true,
+      reportShowSegmentReadiness: form.report ? form.report.showSegmentReadiness !== false : true,
+      reportShowTrainingFocus: form.report ? form.report.showTrainingFocus !== false : true,
+      reportShowKeyConstraints: form.report ? form.report.showKeyConstraints !== false : true,
+      reportShowAsymmetryWatchlist: form.report ? form.report.showAsymmetryWatchlist !== false : true,
       generatePdf: () => this.generatePdf(),
       pdfLabel: this.state.pdfLabel,
       saveLocal: () => this.saveLocal(),
