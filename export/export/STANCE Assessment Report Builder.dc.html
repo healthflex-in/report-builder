@@ -551,8 +551,12 @@
         </sc-if>
       </div>
 
-      <div style="position:relative;z-index:1;border-top:1px solid #DDE2D5;padding-top:8px;margin-top:12px;display:flex;justify-content:space-between;color:#697064;font-size:8px">
-        <span>Assessment Report Summary</span>
+      <div style="position:relative;z-index:1;border-top:1px solid #DDE2D5;padding-top:8px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;color:#697064;font-size:8px">
+        <div style="height:40.5px;max-width:121.5px;width:fit-content;display:flex;align-items:center;justify-content:flex-start;overflow:hidden;flex:0 0 auto">
+          <sc-if value="{{ hasPartnerLogo }}">
+            <img src="{{ partnerLogo }}" alt="Collaborating company logo" style="height:100%;width:auto;max-width:121.5px;object-fit:contain;object-position:left center;display:block" />
+          </sc-if>
+        </div>
         <span>Page 1</span>
       </div>
     </section>
