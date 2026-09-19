@@ -690,20 +690,6 @@ const STATUS_COLORS = {
 
 function statusKey(score, scoreBand){ const sb = scoreBand || {build:50, develop:70, ready:85}; if(score>=sb.ready) return 'good'; if(score>=sb.develop) return 'ok'; if(score>=sb.build) return 'warn'; return 'bad'; }
 function isLowerBetter(t){ return String(t.unit).toLowerCase().includes('second') || (Number(t.max) < Number(t.min)); }
-function valueScore(v,min,max,lowerBetter){
-  v=Number(v); min=Number(min); max=Number(max);
-  if(!Number.isFinite(v)||!Number.isFinite(min)||!Number.isFinite(max)) return null;
-  if(lowerBetter){
-    let low=Math.min(min,max), high=Math.max(min,max);
-    if(v<=low) return 100;
-    if(v<=high) return 70 + (high-v)/(high-low)*30;
-    return Math.max(50,70 - ((v-high)/(Math.abs(high)||1))*40);
-  } else {
-    if(v>=max) return 100;
-    if(v>=min) return 70 + (v-min)/(max-min)*30;
-    return Math.max(50,70 - ((min-v)/(Math.abs(min)||1))*40);
-  }
-}
 function shortFmt(v){ if(v===null||v===undefined||v==='') return '—'; let n=Number(v); return Number.isFinite(n)?(Math.abs(n-Math.round(n))<.05?String(Math.round(n)):n.toFixed(1)):String(v); }
 function fmt(v, unit){ unit = unit||''; if(v===null||v===undefined||v==='') return '—'; let n=Number(v); let s=Number.isFinite(n)?(Math.abs(n-Math.round(n))<.05?String(Math.round(n)):n.toFixed(1)):String(v); return (s+(unit?' '+unit:'')); }
 function normText(t){ if(t.min===null&&t.max===null) return 'Negative / clear'; if(isLowerBetter(t)) return `${shortFmt(Math.min(t.min,t.max))}–${shortFmt(Math.max(t.min,t.max))} ${t.unit||''} or lower`; return `${shortFmt(t.min)}–${shortFmt(t.max)} ${t.unit||''}`; }
@@ -732,7 +718,7 @@ function getVal(values, id){
 }
 function calcTest(t, values, asymThreshold, scoringDoc){
   const type = t.type || '';
-  const scoreBounds = scoringDoc ? ScoringEngine.getScoreBounds(t.id, scoringDoc) : { min: 50, max: 100 };
+  const scoreBounds = ScoringEngine.getScoreBounds(t.id, scoringDoc);
   const left = getVal(values, t.id+'_left');
   const right = getVal(values, t.id+'_right');
   const overallRaw = values[t.id+'_overall'];
@@ -744,9 +730,9 @@ function calcTest(t, values, asymThreshold, scoringDoc){
     const leftEntered = left!==null && Number.isFinite(Number(left));
     const rightEntered = right!==null && Number.isFinite(Number(right));
     filled = leftEntered || rightEntered;
-    // Use ScoringEngine if available, fall back to legacy valueScore
-    const ls = leftEntered ? (scoringDoc ? ScoringEngine.scoreValue(t.id, left, scoringDoc) : valueScore(left, t.min, t.max, isLowerBetter(t))) : null;
-    const rs = rightEntered ? (scoringDoc ? ScoringEngine.scoreValue(t.id, right, scoringDoc) : valueScore(right, t.min, t.max, isLowerBetter(t))) : null;
+    // Every entered value must use the configured scoring engine.
+    const ls = leftEntered ? ScoringEngine.scoreValue(t.id, left, scoringDoc) : null;
+    const rs = rightEntered ? ScoringEngine.scoreValue(t.id, right, scoringDoc) : null;
     if(leftEntered && rightEntered){
       result = (Number(left)+Number(right))/2;
       const mx = Math.max(Math.abs(Number(left)), Math.abs(Number(right)));
@@ -761,14 +747,13 @@ function calcTest(t, values, asymThreshold, scoringDoc){
     const chosen = (overallRaw !== '' && overallRaw != null) ? overallRaw : null;
     filled = !!chosen;
     result = chosen || '—';
-    // Use ScoringEngine for categorical scoring
-    sc = filled ? (scoringDoc ? ScoringEngine.scoreValue(t.id, result, scoringDoc) : ((String(result).toLowerCase()==='negative') ? 100 : 50)) : null;
+    sc = filled ? ScoringEngine.scoreValue(t.id, result, scoringDoc) : null;
   } else {
     const entered = overall!==null && Number.isFinite(Number(overall));
     filled = entered;
     result = entered ? overall : null;
-    // Use ScoringEngine for interpolation scoring
-    sc = entered ? (scoringDoc ? ScoringEngine.scoreValue(t.id, overall, scoringDoc) : valueScore(overall, t.min, t.max, isLowerBetter(t))) : null;
+    // Use the configured interpolation/categorical rule for every entered value.
+    sc = entered ? ScoringEngine.scoreValue(t.id, overall, scoringDoc) : null;
   }
   const hasScore = sc!==null && Number.isFinite(sc);
   sc = hasScore ? Math.max(scoreBounds.min, Math.min(scoreBounds.max, sc)) : null;
@@ -890,7 +875,7 @@ class Component extends DCLogic {
     this.setState({ email: val, emailError: err });
   }
   setValue(id, val){ this.setState(s => ({ values: { ...s.values, [id]: val } })); }
-  changeForm(id){ this.setState({ formId: id, values: initValues(FORM_LIBRARY[id]), openSegmentId: null, openSegmentInitialized: false, checkedTests: {}, focusNotes: null }); this.loadScoringLogic(id); }
+  changeForm(id){ this.setState({ formId: id, scoringDoc: null, values: initValues(FORM_LIBRARY[id]), openSegmentId: null, openSegmentInitialized: false, checkedTests: {}, focusNotes: null }); this.loadScoringLogic(id); }
   async loadScoringLogic(schemaId){
     try {
       const res = await this.apiFetch('/api/scoring-logic?schemaId=' + encodeURIComponent(schemaId));
@@ -898,7 +883,7 @@ class Component extends DCLogic {
         const doc = await res.json();
         this.setState({ scoringDoc: doc });
       } else {
-        // No scoring logic found — fall back to legacy inline scoring
+        // No scoring logic found — entered values remain unscored.
         this.setState({ scoringDoc: null });
       }
     } catch(e){
@@ -1078,8 +1063,8 @@ class Component extends DCLogic {
           _libVersion: s._libVersion + 1,
           values: { ...initValues(form), ...s.values },
         }));
-        // Load scoring logic for the selected schema
-        this.loadScoringLogic(resolvedId);
+        // Load scoring logic for the selected schema before any loaded values are scored
+        await this.loadScoringLogic(resolvedId);
       } else {
         this.setState({
           schemasLoaded: false,
@@ -1100,8 +1085,10 @@ class Component extends DCLogic {
       const res = await this.apiFetch('/api/load?sessionId=' + encodeURIComponent(sessionId));
       if(!res.ok) return;
       const data = await res.json();
+      const loadedFormId = data.formId || this.state.formId;
       this.setState({
-        formId: data.formId || this.state.formId,
+        formId: loadedFormId,
+        scoringDoc: null,
         athlete: data.athlete ?? this.state.athlete,
         gender: data.gender ?? this.state.gender,
         date: data.date ?? this.state.date,
@@ -1114,6 +1101,7 @@ class Component extends DCLogic {
         values: data.values || this.state.values,
         checkedTests: data.checkedTests || {},
       });
+      await this.loadScoringLogic(loadedFormId);
     } catch(e) { /* silent — Puppeteer will still render whatever is loaded */ }
   }
 
@@ -1162,53 +1150,11 @@ class Component extends DCLogic {
 
     this.setState({ authChecked: true, isAuthenticated: false });
   }
-  async generatePdf(){
-    if(this.state.isLocalPreview){
-      alert('Local preview mode does not create cloud PDFs. Use your browser Print dialog to preview or save the report locally.');
-      return;
-    }
-    const isLocalHost = ['localhost', '127.0.0.1', '[::1]', '::1'].includes(window.location.hostname);
-    if(isLocalHost){
-      this.setState({ pdfLabel: 'Opening print…' });
-      // A remote renderer cannot reach this browser's localhost server. The
-      // print stylesheet already hides the form panel and prints report sheets.
-      window.setTimeout(() => {
-        window.print();
-        this.setState({ pdfLabel: 'Create PDF' });
-      }, 0);
-      return;
-    }
-
-    this.setState({ pdfLabel: 'Generating…' });
-    const data = {
-      formId: this.state.formId,
-      athlete: this.state.athlete,
-      gender: this.state.gender,
-      date: this.state.date,
-      coach: this.state.coach,
-      email: this.state.email,
-      phone: this.state.phone,
-      partnerLogo: this.state.partnerLogo,
-      focusNotes: this.state.focusNotes,
-      values: this.state.values,
-      checkedTests: this.state.checkedTests,
-    };
-    try {
-      const res = await this.apiFetch('/api/pdf', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      const result = await res.json().catch(() => ({}));
-      if(result.url) {
-        window.open(result.url, '_blank');
-      } else {
-        alert('Error: ' + (result.detail || result.error || 'Failed to generate PDF'));
-      }
-    } catch(e) {
-      alert('Network error: ' + e.message);
-    } finally {
-      this.setState({ pdfLabel: 'Create PDF' });
-    }
+  generatePdf(){
+    // Print the already-rendered preview. Do not serialize the form or load a
+    // second report page: the browser print dialog captures the exact scores
+    // currently visible in the preview.
+    window.print();
   }
   async saveToCloud(){
     try {
@@ -1244,8 +1190,10 @@ class Component extends DCLogic {
         return;
       }
       const data = await res.json();
+      const loadedFormId = data.formId || this.state.formId;
       this.setState({
-        formId: data.formId || this.state.formId,
+        formId: loadedFormId,
+        scoringDoc: null,
         athlete: data.athlete ?? this.state.athlete,
         gender: data.gender ?? this.state.gender,
         date: data.date ?? this.state.date,
@@ -1258,6 +1206,7 @@ class Component extends DCLogic {
         values: data.values || {},
         checkedTests: data.checkedTests || {},
       });
+      await this.loadScoringLogic(loadedFormId);
       alert('Data loaded from cloud!');
     } catch(e) {
       alert('Network error: ' + e.message);
@@ -1268,11 +1217,13 @@ class Component extends DCLogic {
     localStorage.setItem('stance_assessment_builder', JSON.stringify(data));
     alert('Saved locally in this browser.');
   }
-  loadLocal(){
+  async loadLocal(){
     const raw = localStorage.getItem('stance_assessment_builder');
     if(!raw){ alert('No local save found.'); return; }
     const data = JSON.parse(raw);
-    this.setState({ formId: data.form || this.state.formId, athlete: data.athlete ?? this.state.athlete, gender: data.gender ?? this.state.gender, date: data.date ?? this.state.date, coach: data.coach ?? this.state.coach, focusNotes: data.focusNotes ?? this.state.focusNotes, values: data.values || {}, checkedTests: data.checkedTests || {} });
+    const loadedFormId = data.form || this.state.formId;
+    this.setState({ formId: loadedFormId, scoringDoc: null, athlete: data.athlete ?? this.state.athlete, gender: data.gender ?? this.state.gender, date: data.date ?? this.state.date, coach: data.coach ?? this.state.coach, focusNotes: data.focusNotes ?? this.state.focusNotes, values: data.values || {}, checkedTests: data.checkedTests || {} });
+    await this.loadScoringLogic(loadedFormId);
   }
 
   renderVals(){
