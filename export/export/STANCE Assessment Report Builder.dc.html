@@ -125,6 +125,9 @@
       <sc-if value="{{ authUserEmail }}">
         <div style="margin-top:6px;font-size:11px;color:#697064">Signed in as {{ authUserEmail }}</div>
       </sc-if>
+      <sc-if value="{{ isLocalPreview }}">
+        <div style="margin-top:8px;padding:7px 9px;border-radius:9px;background:#FFF4CC;color:#725A00;font-size:10px;font-weight:700;line-height:1.35">Preview mode: cloud save, load, and API PDF are disabled. Use browser Print to test the report.</div>
+      </sc-if>
     </div>
 
     <div ref="{{ scrollContainerRef }}" style="padding:16px;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:12px;scrollbar-gutter:stable">
@@ -207,6 +210,35 @@
           </div>
 
         </div>
+      </div>
+
+      <div style="border:1px solid #DDE2D5;border-radius:18px;padding:14px;background:#fff;flex:0 0 auto">
+        <h3 style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:600;margin:0 0 6px">Collaborating company logo</h3>
+        <p style="margin:0 0 10px;color:#697064;font-size:10px;line-height:1.4">Upload the partner logo to show in the segment-report footer.</p>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:72px;height:72px;aspect-ratio:1 / 1;border:1px solid #DDE2D5;border-radius:8px;background:#FAFBF6;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto">
+            <sc-if value="{{ hasPartnerLogo }}">
+              <img src="{{ partnerLogo }}" alt="Collaborating company logo preview" style="width:100%;height:100%;object-fit:contain;display:block" />
+            </sc-if>
+            <sc-if value="{{ partnerLogoEmpty }}">
+              <span style="font-size:7px;letter-spacing:.08em;color:#8A9080;font-weight:800;text-transform:uppercase">Partner logo</span>
+            </sc-if>
+          </div>
+          <div style="min-width:0;display:flex;flex-direction:column;gap:6px;flex:1">
+            <label style="display:inline-flex;width:fit-content;align-items:center;justify-content:center;border:1px solid #111;background:#111;color:#C8FF00;border-radius:9px;padding:7px 9px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;cursor:pointer">
+              Upload logo
+              <input type="file" accept="image/png,image/jpeg,image/webp" onChange="{{ onPartnerLogoUpload }}" style="display:none" />
+            </label>
+            <span style="font-size:9px;color:#697064;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ partnerLogoLabel }}</span>
+          </div>
+          <sc-if value="{{ hasPartnerLogo }}">
+            <button onClick="{{ clearPartnerLogo }}" type="button" aria-label="Remove collaborating company logo" style="border:0;background:none;color:#697064;font-size:18px;line-height:1;cursor:pointer;padding:3px">×</button>
+          </sc-if>
+        </div>
+        <sc-if value="{{ partnerLogoError }}">
+          <div style="font-size:9px;color:#E84A4A;font-weight:700;margin-top:8px">{{ partnerLogoError }}</div>
+        </sc-if>
+        <div style="font-size:8px;color:#8A9080;margin-top:8px">PNG, JPG, or WebP • Maximum 2 MB • Footer height 40.5 px • Natural width up to 3:1</div>
       </div>
 
       <sc-for list="{{ formSegments }}" as="seg" hint-placeholder-count="4">
@@ -624,8 +656,12 @@
           </sc-for>
         </div>
 
-        <div style="position:relative;z-index:1;border-top:1px solid #DDE2D5;padding-top:8px;margin-top:6px;display:flex;justify-content:space-between;color:#697064;font-size:8px">
-          <span>STANCE Health • Segment detail and test explanations</span>
+        <div style="position:relative;z-index:1;border-top:1px solid #DDE2D5;padding-top:8px;margin-top:6px;display:flex;justify-content:space-between;align-items:center;color:#697064;font-size:8px">
+          <div style="height:40.5px;max-width:121.5px;width:fit-content;display:flex;align-items:center;justify-content:flex-start;overflow:hidden;flex:0 0 auto">
+            <sc-if value="{{ hasPartnerLogo }}">
+              <img src="{{ partnerLogo }}" alt="Collaborating company logo" style="height:100%;width:auto;max-width:121.5px;object-fit:contain;object-position:left center;display:block" />
+            </sc-if>
+          </div>
           <span>Page {{ p.pageNum }}</span>
         </div>
       </section>
@@ -692,6 +728,7 @@ function getVal(values, id){
 }
 function calcTest(t, values, asymThreshold, scoringDoc){
   const type = t.type || '';
+  const scoreBounds = scoringDoc ? ScoringEngine.getScoreBounds(t.id, scoringDoc) : { min: 50, max: 100 };
   const left = getVal(values, t.id+'_left');
   const right = getVal(values, t.id+'_right');
   const overallRaw = values[t.id+'_overall'];
@@ -714,7 +751,7 @@ function calcTest(t, values, asymThreshold, scoringDoc){
     const vals = [ls,rs].filter(x=>x!==null);
     sc = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
     if(type.includes('with Asym') && asym!==null && asym>asymThreshold && sc!==null){
-      sc = Math.max(50, sc * Math.max(.5, 1-((asym-asymThreshold)/100*3.2)));
+      sc = Math.max(scoreBounds.min, sc * Math.max(.5, 1-((asym-asymThreshold)/100*3.2)));
     }
   } else if(t.min===null && t.max===null){
     const chosen = (overallRaw !== '' && overallRaw != null) ? overallRaw : null;
@@ -730,7 +767,7 @@ function calcTest(t, values, asymThreshold, scoringDoc){
     sc = entered ? (scoringDoc ? ScoringEngine.scoreValue(t.id, overall, scoringDoc) : valueScore(overall, t.min, t.max, isLowerBetter(t))) : null;
   }
   const hasScore = sc!==null && Number.isFinite(sc);
-  sc = hasScore ? Math.max(50, Math.min(100, sc)) : null;
+  sc = hasScore ? Math.max(scoreBounds.min, Math.min(scoreBounds.max, sc)) : null;
   return {...t, left, right, overall: (overall ?? result), result, score: sc, asym, filled: filled && hasScore};
 }
 function normBarData(t){
@@ -793,6 +830,7 @@ class Component extends DCLogic {
     authChecked: false,
     isAuthenticated: false,
     isAutoload: false,
+    isLocalPreview: false,
     loginStep: 'email',
     loginEmail: '',
     loginOtp: '',
@@ -801,12 +839,39 @@ class Component extends DCLogic {
     authError: '',
     schemaError: '',
     scoringDoc: null,
+    partnerLogo: '',
+    partnerLogoName: '',
+    partnerLogoError: '',
   };
 
   segmentEls = {};
   scrollEl = null;
 
   setField(key, val){ this.setState({ [key]: val }); }
+  onPartnerLogoUpload(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const acceptedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    if(!acceptedTypes.includes(file.type)){
+      this.setState({ partnerLogoError: 'Choose a PNG, JPG, or WebP image.' });
+      e.target.value = '';
+      return;
+    }
+    if(file.size > 2 * 1024 * 1024){
+      this.setState({ partnerLogoError: 'Logo image must be 2 MB or smaller.' });
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => this.setState({
+      partnerLogo: String(reader.result || ''),
+      partnerLogoName: file.name,
+      partnerLogoError: '',
+    });
+    reader.onerror = () => this.setState({ partnerLogoError: 'The logo could not be read. Please try another image.' });
+    reader.readAsDataURL(file);
+  }
+  clearPartnerLogo(){ this.setState({ partnerLogo: '', partnerLogoName: '', partnerLogoError: '' }); }
   onPhoneChange(val){
     // Allow only digits, max 10
     const digits = val.replace(/\D/g, '').slice(0, 10);
@@ -992,6 +1057,7 @@ class Component extends DCLogic {
         coach: data.coach ?? this.state.coach,
         email: data.email ?? this.state.email,
         phone: data.phone ?? this.state.phone,
+        partnerLogo: data.partnerLogo ?? this.state.partnerLogo,
         values: data.values || this.state.values,
         checkedTests: data.checkedTests || {},
       });
@@ -1017,10 +1083,20 @@ class Component extends DCLogic {
   async componentDidMount(){
     const params = new URLSearchParams(window.location.search);
     const isAutoload = !!params.get('autoload');
+    const isLocalPreview =
+      window.location.hostname === 'localhost' && params.get('localPreview') === '1';
 
     // PDF renderer path: skip login (sessionId UUID is the access key).
     if(isAutoload){
       this.setState({ authChecked: true, isAuthenticated: true, isAutoload: true });
+      await this.loadSchemasAndSession();
+      return;
+    }
+
+    // Development-only browser preview. This is deliberately restricted to
+    // localhost and does not mint a token or weaken server-side auth.
+    if(isLocalPreview){
+      this.setState({ authChecked: true, isAuthenticated: true, isLocalPreview: true });
       await this.loadSchemasAndSession();
       return;
     }
@@ -1034,6 +1110,10 @@ class Component extends DCLogic {
     this.setState({ authChecked: true, isAuthenticated: false });
   }
   async generatePdf(){
+    if(this.state.isLocalPreview){
+      alert('Local preview mode does not create cloud PDFs. Use your browser Print dialog to preview or save the report locally.');
+      return;
+    }
     this.setState({ pdfLabel: 'Generating…' });
     const data = {
       formId: this.state.formId,
@@ -1043,6 +1123,7 @@ class Component extends DCLogic {
       coach: this.state.coach,
       email: this.state.email,
       phone: this.state.phone,
+      partnerLogo: this.state.partnerLogo,
       focusNotes: this.state.focusNotes,
       values: this.state.values,
       checkedTests: this.state.checkedTests,
@@ -1073,6 +1154,7 @@ class Component extends DCLogic {
       coach: this.state.coach,
       email: this.state.email,
       phone: this.state.phone,
+      partnerLogo: this.state.partnerLogo,
       focusNotes: this.state.focusNotes,
       values: this.state.values,
       checkedTests: this.state.checkedTests,
@@ -1108,6 +1190,7 @@ class Component extends DCLogic {
         coach: data.coach ?? this.state.coach,
         email: data.email ?? this.state.email,
         phone: data.phone ?? this.state.phone,
+        partnerLogo: data.partnerLogo ?? this.state.partnerLogo,
         focusNotes: data.focusNotes ?? this.state.focusNotes,
         values: data.values || {},
         checkedTests: data.checkedTests || {},
@@ -1156,8 +1239,9 @@ class Component extends DCLogic {
       sendOtpLabel: this.state.authBusy ? 'Sending…' : 'Send OTP',
       verifyOtpLabel: this.state.authBusy ? 'Verifying…' : 'Verify & continue',
       logout: () => this.logout(),
-      showLogout: this.state.isAuthenticated && !this.state.isAutoload,
-      authUserEmail: (user && user.email) || '',
+      showLogout: this.state.isAuthenticated && !this.state.isAutoload && !this.state.isLocalPreview,
+      authUserEmail: this.state.isLocalPreview ? 'Local preview — no sign-in' : ((user && user.email) || ''),
+      isLocalPreview: this.state.isLocalPreview,
     };
     if(!form) return { ...authBase, schemasLoaded: false, formOptions: [] };
     const values = this.state.values;
@@ -1356,6 +1440,14 @@ class Component extends DCLogic {
       phoneError: this.state.phoneError || '',
       date: this.state.date, onDate: (e) => this.setField('date', e.target.value),
       coach: this.state.coach, onCoach: (e) => this.setField('coach', e.target.value),
+      partnerLogo: this.state.partnerLogo,
+      hasPartnerLogo: !!this.state.partnerLogo,
+      partnerLogoEmpty: !this.state.partnerLogo,
+      partnerLogoName: this.state.partnerLogoName,
+      partnerLogoLabel: this.state.partnerLogoName || (this.state.partnerLogo ? 'Uploaded logo' : 'No logo selected'),
+      partnerLogoError: this.state.partnerLogoError,
+      onPartnerLogoUpload: (e) => this.onPartnerLogoUpload(e),
+      clearPartnerLogo: () => this.clearPartnerLogo(),
       focusEditorItems, onAddFocusItem: () => this.addFocusItem(), onResetFocus: () => this.resetFocus(),
       formSegments,
       scrollContainerRef: (el) => { if(el) this.scrollEl = el; },

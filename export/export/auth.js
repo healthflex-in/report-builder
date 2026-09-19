@@ -13,7 +13,7 @@
   const GRAPHQL_URL =
     (typeof global.STANCE_GRAPHQL_URL === 'string' && global.STANCE_GRAPHQL_URL) ||
     'https://devapi.stance.health/graphql';
-
+       
   function getToken() {
     try {
       return localStorage.getItem(STORAGE.token);
@@ -75,18 +75,43 @@
     return headers;
   }
 
+  function toGraphQLError(response, payload) {
+    const graphqlError = payload?.errors?.[0] || {};
+    const remoteMessage = graphqlError.message || `Request failed (${response.status})`;
+    const isOtpServiceFailure =
+      remoteMessage === 'GraphQLValidationError is not defined' ||
+      (graphqlError?.info?.errorType === 'ReferenceError' &&
+        /GraphQLValidationError/.test(remoteMessage));
+
+    // Do not show an internal server exception to clinicians. Keep the original
+    // errors on the Error object for debugging without leaking it into the UI.
+    const error = new Error(
+      isOtpServiceFailure
+        ? 'The OTP login service is temporarily unavailable. Please try again later.'
+        : remoteMessage
+    );
+    error.code = isOtpServiceFailure ? 'OTP_SERVICE_UNAVAILABLE' : 'GRAPHQL_REQUEST_FAILED';
+    error.graphqlErrors = payload?.errors || [];
+    error.httpStatus = response.status;
+    return error;
+  }
+
   async function graphql(query, variables) {
     const res = await fetch(GRAPHQL_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, variables }),
     });
-    const json = await res.json();
-    if (json.errors && json.errors.length) {
-      const msg = json.errors[0].message || 'Request failed';
-      const err = new Error(msg);
-      err.graphqlErrors = json.errors;
-      throw err;
+
+    let json;
+    try {
+      json = await res.json();
+    } catch {
+      throw new Error('The OTP login service returned an invalid response. Please try again later.');
+    }
+
+    if (!res.ok || (json.errors && json.errors.length)) {
+      throw toGraphQLError(res, json);
     }
     return json.data;
   }

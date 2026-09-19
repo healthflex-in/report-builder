@@ -25,59 +25,69 @@ window.ScoringEngine = (function() {
     return getDirection(testId, scoringDoc) === 'lower';
   }
 
-  // ─── Interpolate between scale points ───────────────────────────────────────
-  // Given a value and a scale array [{value, score}, ...], find where the value
-  // falls and linearly interpolate the score.
-  //
-  // For "higher is better": scale is sorted ascending by value (210→426)
-  // For "lower is better": scale is sorted descending by value (2.00→1.75)
-  //
-  // If value is below the lowest scale point → clamp to 50
-  // If value is above the highest scale point → clamp to 100
+  // ─── Score bounds from the rule ─────────────────────────────────────────────
+  // Football rules start at 50; Cricket Elite starts at 0. The engine must honor
+  // the actual score values stored in the linked scoring-logic document.
+  function getScoreBounds(testId, scoringDoc) {
+    const rule = getRule(testId, scoringDoc);
+    if (!rule) return { min: 50, max: 100 };
+
+    const scores = rule.method === 'interpolate'
+      ? (rule.scale || []).map(point => Number(point.score))
+      : rule.method === 'categorical'
+        ? Object.values(rule.categories || {}).map(Number)
+        : [];
+
+    const validScores = scores.filter(Number.isFinite);
+    return validScores.length
+      ? { min: Math.min(...validScores), max: Math.max(...validScores) }
+      : { min: 50, max: 100 };
+  }
+
+  function clampScore(score, testId, scoringDoc) {
+    const { min, max } = getScoreBounds(testId, scoringDoc);
+    return Math.max(min, Math.min(max, score));
+  }
+
+  // The stored score anchors determine the valid score range. For example,
+  // Football is 50–100 while Cricket Elite is 0–100.
   function interpolate(value, scale, direction) {
     if (!scale || scale.length === 0) return null;
     const v = Number(value);
     if (!Number.isFinite(v)) return null;
 
-    // Sort scale by score ascending (50→100) to ensure consistent processing
+    // Always process from the smallest score to the largest score.
     const sorted = [...scale].sort((a, b) => a.score - b.score);
 
-    // For "higher is better": higher value = higher score
-    // For "lower is better": lower value = higher score (scale values are descending)
-    //
-    // The scale is always stored as: lowest score (50) first → highest score (100) last
-    // For "higher": value at index 0 is the minimum acceptable (score 50)
-    // For "lower": value at index 0 is the maximum acceptable (score 50)
+    // Some source sheets intentionally have neighbouring bands with the same
+    // numeric boundary. At an exact shared boundary, honor the highest band.
+    const exactPoints = sorted.filter(point => Number(point.value) === v);
+    if (exactPoints.length) return Math.max(...exactPoints.map(point => point.score));
 
     if (direction === 'higher') {
-      // Value below minimum → score below 50 (clamp to 50)
-      if (v <= sorted[0].value) return 50;
-      // Value above maximum → score 100
-      if (v >= sorted[sorted.length - 1].value) return 100;
-      // Find the two points to interpolate between
+      if (v < sorted[0].value) return sorted[0].score;
+      if (v > sorted[sorted.length - 1].value) return sorted[sorted.length - 1].score;
       for (let i = 0; i < sorted.length - 1; i++) {
-        if (v >= sorted[i].value && v <= sorted[i + 1].value) {
-          const range = sorted[i + 1].value - sorted[i].value;
-          const progress = (v - sorted[i].value) / range;
-          return sorted[i].score + progress * (sorted[i + 1].score - sorted[i].score);
+        const start = sorted[i];
+        const end = sorted[i + 1];
+        const range = end.value - start.value;
+        if (range <= 0) continue;
+        if (v > start.value && v < end.value) {
+          const progress = (v - start.value) / range;
+          return start.score + progress * (end.score - start.score);
         }
       }
     } else if (direction === 'lower') {
-      // For lower-is-better, scale values go from high (score 50) to low (score 100)
-      // e.g., 2.00s=50, 1.95s=60, ..., 1.75s=100
-      // Lower value = better score
-
-      // Value above the worst (highest value) → clamp to 50
-      if (v >= sorted[0].value) return 50;
-      // Value below the best (lowest value) → score 100
-      if (v <= sorted[sorted.length - 1].value) return 100;
-      // Find the two points to interpolate between
-      // sorted by score: [{value:2.00, score:50}, {value:1.95, score:60}, ...]
+      if (v > sorted[0].value) return sorted[0].score;
+      if (v < sorted[sorted.length - 1].value) return sorted[sorted.length - 1].score;
       for (let i = 0; i < sorted.length - 1; i++) {
-        if (v <= sorted[i].value && v >= sorted[i + 1].value) {
-          const range = sorted[i].value - sorted[i + 1].value;
-          const progress = (sorted[i].value - v) / range;
-          return sorted[i].score + progress * (sorted[i + 1].score - sorted[i].score);
+        const start = sorted[i];
+        const end = sorted[i + 1];
+        const range = start.value - end.value;
+        if (range <= 0) continue;
+        if (v < start.value && v > end.value) {
+          const progress = (start.value - v) / range;
+          return start.score + progress * (end.score - start.score);
         }
       }
     }
@@ -101,26 +111,23 @@ window.ScoringEngine = (function() {
 
   // ─── Main scoring function ──────────────────────────────────────────────────
   // Takes a testId, raw value, and the scoring logic document.
-  // Returns a score between 50-100, or null if no rule or invalid value.
+  // Returns a score inside that rule's configured bounds, or null for no rule/value.
   function scoreValue(testId, value, scoringDoc) {
     const rule = getRule(testId, scoringDoc);
     if (!rule) return null;
 
     if (rule.method === 'interpolate') {
       const score = interpolate(value, rule.scale, rule.direction);
-      if (score === null) return null;
-      // Clamp to 50-100
-      return Math.max(50, Math.min(100, score));
+      return score === null ? null : clampScore(score, testId, scoringDoc);
     }
 
     if (rule.method === 'categorical') {
       const score = scoreCategorical(value, rule.categories);
-      if (score === null) return null;
-      return Math.max(50, Math.min(100, score));
+      return score === null ? null : clampScore(score, testId, scoringDoc);
     }
 
     if (rule.method === 'manual') {
-      // Manual tests are not auto-scored
+      // Manual tests are not auto-scored.
       return null;
     }
 
@@ -132,6 +139,7 @@ window.ScoringEngine = (function() {
     scoreValue: scoreValue,
     getRule: getRule,
     getDirection: getDirection,
+    getScoreBounds: getScoreBounds,
     isLowerBetter: isLowerBetter,
   };
 })();
