@@ -2,6 +2,13 @@ const { getDb } = require('./_db');
 const { randomUUID } = require('crypto');
 const { requireAuth } = require('./_auth');
 
+function isLocalhost(host) {
+  const value = String(host || '').toLowerCase();
+  return value === 'localhost' || value.startsWith('localhost:') ||
+    value === '127.0.0.1' || value.startsWith('127.0.0.1:') ||
+    value === '[::1]' || value.startsWith('[::1]:');
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -11,6 +18,17 @@ module.exports = async (req, res) => {
 
   try {
     const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
+
+    // The hosted PDF service runs outside this machine and cannot access a
+    // developer's private localhost server. The browser uses window.print()
+    // for local report-builder sessions instead.
+    if (isLocalhost(host)) {
+      return res.status(409).json({
+        error: 'Local PDF export uses the browser print dialog',
+        code: 'LOCAL_PRINT_REQUIRED',
+      });
+    }
 
     const sessionId = randomUUID();
     const db = await getDb();
@@ -20,7 +38,6 @@ module.exports = async (req, res) => {
       createdAt: new Date().toISOString(),
     });
 
-    const host = req.headers['x-forwarded-host'] || req.headers.host;
     const reportUrl = `https://${host}/STANCE%20Assessment%20Report%20Builder.dc.html?autoload=${sessionId}`;
 
     const pdfRes = await fetch('https://devapi.stance.health/api/pdf/generate', {

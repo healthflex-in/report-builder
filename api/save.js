@@ -1,4 +1,5 @@
 const { DateTime } = require('luxon');
+const { ObjectId } = require('mongodb');
 const { getDb } = require('./_db');
 const { requireAuth } = require('./_auth');
 
@@ -11,12 +12,40 @@ module.exports = async (req, res) => {
 
   try {
     const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      return res.status(400).json({ error: 'Report data is required' });
+    }
+
+    const { reportId, ...reportData } = data;
     const db = await getDb();
-    const createdAt = DateTime.now().setZone('Asia/Kolkata').toString();
-    const result = await db.collection('report-data').insertOne({ ...data, createdAt });
-    res.status(200).json({ success: true, id: result.insertedId });
+    const now = DateTime.now().setZone('Asia/Kolkata').toString();
+    const reports = db.collection('report-data');
+
+    if (reportId) {
+      if (!ObjectId.isValid(reportId)) {
+        return res.status(400).json({ error: 'Invalid report ID' });
+      }
+
+      const result = await reports.updateOne(
+        { _id: new ObjectId(reportId) },
+        { $set: { ...reportData, updatedAt: now } }
+      );
+
+      if (!result.matchedCount) {
+        return res.status(404).json({ error: 'Report not found' });
+      }
+
+      return res.status(200).json({ success: true, id: String(reportId), updated: true });
+    }
+
+    const result = await reports.insertOne({
+      ...reportData,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return res.status(200).json({ success: true, id: result.insertedId.toString(), created: true });
   } catch (error) {
     console.error('MongoDB Save Error:', error);
-    res.status(500).json({ error: 'Failed to save data', detail: error.message });
+    return res.status(500).json({ error: 'Failed to save data', detail: error.message });
   }
 };
