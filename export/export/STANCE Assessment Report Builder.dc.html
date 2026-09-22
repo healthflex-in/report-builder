@@ -427,14 +427,14 @@
           </div>
           <div style="position:relative;z-index:1;min-width:0">
             <span style="display:block;text-transform:uppercase;letter-spacing:.12em;color:#bbb;font-size:9px;font-weight:800;margin-bottom:5px">Physical Fitness Profile</span>
-            <h1 style="font-family:'Unbounded',sans-serif;font-size:18px;line-height:1.2;margin:0 0 8px;font-weight:600">{{ overallHeadline }}</h1>
-            <p style="margin:0;color:#E6E6E6;font-size:10.5px;max-width:520px;line-height:1.5">This report converts test data into a concise readiness profile across all assessed categories.</p>
+            <h1 style="font-family:'Unbounded',sans-serif;font-size:18px;line-height:1.2;margin:0 0 8px;font-weight:600">This report converts test data into a concise readiness profile across all assessed categories.</h1>
+            <p style="margin:0;color:#E6E6E6;font-size:10.5px;max-width:520px;line-height:1.5">A simple indicator of your current readiness to perform</p>
             <div style="margin-top:14px">
-              <div style="position:relative;height:14px;margin-bottom:5px;font-size:8px;text-transform:uppercase;letter-spacing:.11em;color:#bbb;font-weight:800">
+              <div style="position:relative;height:14px;margin-bottom:5px;font-size:7.5px;text-transform:uppercase;letter-spacing:.04em;color:#bbb;font-weight:800">
                 <span style="position:absolute;left:0%;transform:translateX(0%)">Priority</span>
-                <span style="position:absolute;left:50%;transform:translateX(-50%)">Build</span>
-                <span style="position:absolute;left:70%;transform:translateX(-50%)">Develop</span>
-                <span style="position:absolute;left:85%;transform:translateX(-50%)">Ready</span>
+                <span style="position:absolute;left:50%;transform:translateX(-50%)">Developmental</span>
+                <span style="position:absolute;left:70%;transform:translateX(-50%)">Professional</span>
+                <span style="position:absolute;left:85%;transform:translateX(-50%)">Elite</span>
               </div>
               <div style="height:9px;border-radius:99px;background:linear-gradient(90deg,#E84A4A,#FFB020,#C8FF00);position:relative">
                 <span style="position:absolute;top:-5px;width:3px;height:19px;background:#fff;border-radius:3px;transform:translateX(-50%);left:{{ scaleMarkerLeft }}%"></span>
@@ -681,14 +681,23 @@
 const FORM_LIBRARY = window.FORM_LIBRARY;
 
 const STATUS_COLORS = {
-  good: {bg:'#C8FF00', fg:'#111111', label:'READY'},
-  ok:   {bg:'#DFFB93', fg:'#111111', label:'DEVELOP'},
-  warn: {bg:'#FFE3A3', fg:'#111111', label:'BUILD'},
+  good: {bg:'#C8FF00', fg:'#111111', label:'ELITE'},
+  ok:   {bg:'#DFFB93', fg:'#111111', label:'PROFESSIONAL'},
+  warn: {bg:'#FFE3A3', fg:'#111111', label:'DEVELOPMENTAL'},
   bad:  {bg:'#FFE0E0', fg:'#A31616', label:'PRIORITY'},
   pending: {bg:'#EEF1E8', fg:'#697064', label:'NOT ASSESSED'}
 };
 
-function statusKey(score, scoreBand){ const sb = scoreBand || {build:50, develop:70, ready:85}; if(score>=sb.ready) return 'good'; if(score>=sb.develop) return 'ok'; if(score>=sb.build) return 'warn'; return 'bad'; }
+function statusKey(score, scoreBand){
+  const sb = scoreBand || {};
+  const elite = sb.elite ?? sb.ready ?? 85;
+  const professional = sb.professional ?? sb.develop ?? 70;
+  const developmental = sb.developmental ?? sb.build ?? 50;
+  if(score>=elite) return 'good';
+  if(score>=professional) return 'ok';
+  if(score>=developmental) return 'warn';
+  return 'bad';
+}
 function isLowerBetter(t){ return String(t.unit).toLowerCase().includes('second') || (Number(t.max) < Number(t.min)); }
 function shortFmt(v){ if(v===null||v===undefined||v==='') return '—'; let n=Number(v); return Number.isFinite(n)?(Math.abs(n-Math.round(n))<.05?String(Math.round(n)):n.toFixed(1)):String(v); }
 function fmt(v, unit){ unit = unit||''; if(v===null||v===undefined||v==='') return '—'; let n=Number(v); let s=Number.isFinite(n)?(Math.abs(n-Math.round(n))<.05?String(Math.round(n)):n.toFixed(1)):String(v); return (s+(unit?' '+unit:'')); }
@@ -1467,7 +1476,7 @@ class Component extends DCLogic {
       scrollContainerRef: (el) => { if(el) this.scrollEl = el; },
       formName: form.name, sport: form.sport || '', ageGroup: form.ageGroup || '',
       overall, overallRound: Math.round(overall), overallLabel: overallColors.label, overallBg: overallColors.bg, overallFg: overallColors.fg,
-      overallHeadline: overallColors.label.charAt(0) + overallColors.label.slice(1).toLowerCase() + ' for ' + (form.sport || form.name) + ' with segmented priorities.',
+      overallHeadline: 'This report converts test data into a concise readiness profile across all assessed categories.',
       dashArray: circ.toFixed(1), dashOffset: (circ*(1-overall/100)).toFixed(1),
       scaleMarkerLeft: Math.max(0, Math.min(100, overall)),
       segs, radarSegs, radar, hasRadarData, constraints, asymList, hasAsym, noAsym, focusList, segBlocks, segPages, tileColumns,

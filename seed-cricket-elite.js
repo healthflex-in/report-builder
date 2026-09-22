@@ -134,8 +134,8 @@ const tests = [
   // ── GROUND FITNESS — category weight 25 ────────────────────────────────────
   test({ segment: 'ground_fitness', equipment: 'Field Assessment', name: '10 M', unit: 'Sec', direction: 'lower', weight: 20, anchors: [2.2, 2.0, 1.9, 1.85, 1.8, 1.75, 1.71, 1.7], bands: ['2.2', '2.2 to 2.0', '2.0 to 1.9', '1.9 to 1.85', '1.85 to 1.8', '1.8 to 1.75', '1.75 to 1.71', '1.7-'] }),
   test({ segment: 'ground_fitness', equipment: 'Field Assessment', name: '20 M', unit: 'Sec', direction: 'lower', weight: 20, anchors: [3.5, 3.3, 3.2, 3.1, 3.0, 2.95, 2.85, 2.85], bands: ['3.5', '3.5 to 3.3', '3.3 to 3.2', '3.3 to 3.1', '3.1 to 3.0', '3.0 to 2.95', '2.95 to 2.85', '2.85-'] }),
-  test({ segment: 'ground_fitness', equipment: 'Field Assessment', name: '40 M', unit: 'Sec', direction: 'lower', weight: 20, anchors: [5.8, 5.6, 5.5, 5.4, 5.36, 5.28, 5.2, 5.2], bands: ['5.8', '5.8 to 5.6', '5.6 to 5.5', '5.5 to 5.4', '5.44 to 5.36', '5.36 to 5.28', '5.28 to 5.2', '5.2-'] }),
-  test({ segment: 'ground_fitness', equipment: 'Field Assessment', name: 'MAS', unit: 'M/S', weight: 40, anchors: [3, 3, 3.3, 3.5, 3.8, 4.0, 4.2, 4.4], bands: ['3', '3 to 3.3', '3.3 to 3.5', '3.5 to 3.8', '3.8 to 4.0', '4.0 to 4.2', '4.2 to 4.4', '4.4+'] }),
+  test({ segment: 'ground_fitness', equipment: 'Field Assessment', name: '40 M', unit: 'Sec', direction: 'lower', weight: 20, anchors: [6.0, 5.8, 5.7, 5.6, 5.56, 5.48, 5.4, 5.4], bands: ['6.0', '6.0 to 5.8', '5.8 to 5.7', '5.7 to 5.6', '5.64 to 5.56', '5.56 to 5.48', '5.48 to 5.4', '5.4-'] }),
+  test({ segment: 'ground_fitness', equipment: 'Field Assessment', name: 'MAS', unit: 'M/S', direction: 'higher', weight: 40, anchors: [3.2, 3.2, 3.5, 3.7, 4.0, 4.2, 4.4, 4.6], bands: ['3.2', '3.2 to 3.5', '3.5 to 3.7', '3.7 to 4.0', '4.0 to 4.2', '4.2 to 4.4', '4.4 to 4.6', '4.6+'] }),
 
   // ── NUTRITION — category weight 20 ─────────────────────────────────────────
   test({ segment: 'nutrition', equipment: '', name: 'Skinfolds', unit: 'Sum', direction: 'lower', weight: 80, anchors: [125, 110, 98, 86, 74, 62, 50, 50], bands: ['125', '110 to 125', '98 to 110', '86 to 98', '74 to 86', '62 to 74', '50 to 62', '50-'] }),
@@ -161,6 +161,7 @@ async function seed() {
     sport: 'Cricket',
     gender: '',
     ageGroup: '',
+    scoreBand: { developmental: 50, professional: 70, elite: 85 },
     segments,
     tests: tests.map(({ scoringRule, ...schemaTest }) => schemaTest),
   };
@@ -176,7 +177,7 @@ async function seed() {
       title: CATEGORY_TITLES[id],
       summary,
     })),
-    version: 2,
+    version: 3,
     description: '',
     rules: tests.map(({ scoringRule }) => scoringRule),
   };

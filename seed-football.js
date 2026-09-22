@@ -16,7 +16,7 @@ async function seed() {
     gender: 'Mixed',
     ageGroup: 'U16',
     asymmetryThreshold: 10,
-    scoreBand: { build: 50, develop: 70, ready: 85 },
+    scoreBand: { developmental: 50, professional: 70, elite: 85 },
     report: {
       showRadar: true,
       showSegmentReadiness: true,
