@@ -138,7 +138,7 @@ const tests = [
   test({ segment: 'ground_fitness', equipment: 'Field Assessment', name: 'MAS', unit: 'M/S', direction: 'higher', weight: 40, anchors: [3.2, 3.2, 3.5, 3.7, 4.0, 4.2, 4.4, 4.6], bands: ['3.2', '3.2 to 3.5', '3.5 to 3.7', '3.7 to 4.0', '4.0 to 4.2', '4.2 to 4.4', '4.4 to 4.6', '4.6+'] }),
 
   // ── NUTRITION — category weight 20 ─────────────────────────────────────────
-  test({ segment: 'nutrition', equipment: '', name: 'Skinfolds', unit: 'Sum', direction: 'lower', weight: 80, anchors: [125, 110, 98, 86, 74, 62, 50, 50], bands: ['125', '110 to 125', '98 to 110', '86 to 98', '74 to 86', '62 to 74', '50 to 62', '50-'] }),
+  test({ segment: 'nutrition', equipment: '', name: 'Skinfolds', unit: 'Sum', direction: 'lower', weight: 80, anchors: [125, 110, 98, 86, 80, 74, 65, 60], bands: ['125', '110 to 125', '98 to 110', '86 to 98', '80 to 86', '74 to 80', '65 to 74', '60-'] }),
   test({ segment: 'nutrition', equipment: '', name: 'BMR (Kcal/Kg FFM/Day)', unit: 'Kcal/Kg PFM/Day', weight: 20, anchors: [18, 18, 21, 23, 25, 27, 29, 31], bands: ['18', '18 to 21', '21 to 23', '23 to 25', '25 to 27', '27 to 29', '29 to 31', '31+'] }),
 ];
 
@@ -177,7 +177,7 @@ async function seed() {
       title: CATEGORY_TITLES[id],
       summary,
     })),
-    version: 3,
+    version: 4,
     description: '',
     rules: tests.map(({ scoringRule }) => scoringRule),
   };
