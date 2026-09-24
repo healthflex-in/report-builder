@@ -270,6 +270,11 @@
                       Show
                     </label>
                   </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+                    <sc-if value="{{ t.showLowerBetter }}" hint-placeholder-val="{{ false }}">
+                      <span style="display:inline-block;background:#FFF59D;color:#6D4C00;border-radius:6px;padding:2px 6px;font-size:8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap">Lower is better</span>
+                    </sc-if>
+                  </div>
                   <div style="font-size:10px;color:#697064;margin-top:2px">Target: {{ t.normTextStr }} • Weight: {{ t.weight }}</div>
 
                   <sc-if value="{{ t.hasScoreScale }}" hint-placeholder-val="{{ false }}">
@@ -649,6 +654,9 @@
 
                     <div style="display:flex;gap:4px;flex-wrap:wrap">
                       <span style="background:#111111;border-radius:99px;padding:3px 8px;font-size:7px;color:#C8FF00;font-weight:800;letter-spacing:.04em">{{ t.resultText }}</span>
+                      <sc-if value="{{ t.showLowerBetter }}" hint-placeholder-val="{{ false }}">
+                        <span style="background:#FFF59D;border-radius:99px;padding:3px 6px;font-size:6.8px;color:#6D4C00;font-weight:800">Lower is better</span>
+                      </sc-if>
                       <sc-if value="{{ t.hasAsym }}" hint-placeholder-val="{{ false }}">
                         <span style="background:#F1F3EC;border-radius:99px;padding:3px 6px;font-size:6.8px;color:#697064;font-weight:800">{{ t.asymText }}</span>
                       </sc-if>
@@ -698,10 +706,30 @@ function statusKey(score, scoreBand){
   if(score>=developmental) return 'warn';
   return 'bad';
 }
-function isLowerBetter(t){ return String(t.unit).toLowerCase().includes('second') || (Number(t.max) < Number(t.min)); }
+function isLowerBetter(t){
+  if(!t) return false;
+  const dir = String(t.direction || '').toLowerCase();
+  if(dir === 'lower') return true;
+  if(dir === 'higher') return false;
+  const unit = String(t.unit || '').toLowerCase();
+  return unit.includes('second') || unit === 'sec' || unit === 's' || (Number(t.max) < Number(t.min));
+}
+function isSelectTypeTest(t){
+  const type = t && t.type || '';
+  return !type.includes('Bilateral') && t.min==null && t.max==null && !String(t.unit || '').trim();
+}
 function shortFmt(v){ if(v===null||v===undefined||v==='') return '—'; let n=Number(v); return Number.isFinite(n)?(Math.abs(n-Math.round(n))<.05?String(Math.round(n)):n.toFixed(1)):String(v); }
 function fmt(v, unit){ unit = unit||''; if(v===null||v===undefined||v==='') return '—'; let n=Number(v); let s=Number.isFinite(n)?(Math.abs(n-Math.round(n))<.05?String(Math.round(n)):n.toFixed(1)):String(v); return (s+(unit?' '+unit:'')); }
-function normText(t){ if(t.min===null&&t.max===null) return 'Negative / clear'; if(isLowerBetter(t)) return `${shortFmt(Math.min(t.min,t.max))}–${shortFmt(Math.max(t.min,t.max))} ${t.unit||''} or lower`; return `${shortFmt(t.min)}–${shortFmt(t.max)} ${t.unit||''}`; }
+function normText(t){
+  const lower = isLowerBetter(t);
+  if(t.min==null && t.max==null){
+    if(lower) return 'Lower is better';
+    if(String(t.unit || '').trim()) return t.unit;
+    return 'Negative / clear';
+  }
+  if(lower) return `${shortFmt(Math.min(t.min,t.max))}–${shortFmt(Math.max(t.min,t.max))} ${t.unit||''} or lower`;
+  return `${shortFmt(t.min)}–${shortFmt(t.max)} ${t.unit||''}`;
+}
 
 function initValues(form){
   const values = {};
@@ -752,7 +780,7 @@ function calcTest(t, values, asymThreshold, scoringDoc){
     if(type.includes('with Asym') && asym!==null && asym>asymThreshold && sc!==null){
       sc = Math.max(scoreBounds.min, sc * Math.max(.5, 1-((asym-asymThreshold)/100*3.2)));
     }
-  } else if(t.min===null && t.max===null){
+  } else if(isSelectTypeTest(t)){
     const chosen = (overallRaw !== '' && overallRaw != null) ? overallRaw : null;
     filled = !!chosen;
     result = chosen || '—';
@@ -1332,11 +1360,13 @@ class Component extends DCLogic {
       const segTests = form.tests.filter(t => t.segment === s.id).map(t => {
         const type = t.type || '';
         const isBilateral = type.includes('Bilateral');
-        const isSelectType = !isBilateral && (t.min === null && t.max === null);
+        const isSelectType = isSelectTypeTest(t);
         const isNumberType = !isBilateral && !isSelectType;
+        const showAsymmetry = isBilateral && type.includes('with Asym');
 
         // ── Score scale from scoring logic ──────────────────────────────────────
         const rule = scoringDoc ? ScoringEngine.getRule(t.id, scoringDoc) : null;
+        const showLowerBetter = (rule && rule.direction === 'lower') || isLowerBetter(t);
         let scoreScaleItems = [];
         let scoreScaleMethod = rule ? rule.method : null;
         if (rule && rule.method === 'interpolate' && rule.scale) {
@@ -1353,7 +1383,7 @@ class Component extends DCLogic {
         return {
           id: t.id, name: t.name, icon: t.icon, explanation: t.explanation, weight: t.weight || 0,
           unit: t.unit || '', normTextStr: normText(t),
-          isBilateral, isSelectType, isNumberType,
+          isBilateral, isSelectType, isNumberType, showLowerBetter, showAsymmetry,
           leftVal: values[t.id+'_left'] ?? '',
           rightVal: values[t.id+'_right'] ?? '',
           overallVal: values[t.id+'_overall'] ?? '',
@@ -1385,12 +1415,14 @@ class Component extends DCLogic {
         const isBilateral = (t.type||'').includes('Bilateral');
         const resultText = isBilateral ? `${shortFmt(t.left)} / ${shortFmt(t.right)} ${t.unit||''}`.trim() : fmt(t.result, t.unit);
         const hasAsymVal = Number.isFinite(t.asym);
+        const showAsymmetry = isBilateral && String(t.type||'').includes('with Asym');
 
         // ── Direction-aware bar gradient ──────────────────────────────────────
         // Prefer the direction from the scoring logic doc; fall back to the
-        // legacy isLowerBetter() heuristic on the schema test object.
+        // schema direction, then the legacy isLowerBetter() heuristic.
         const tileRule = scoringDoc ? ScoringEngine.getRule(t.id, scoringDoc) : null;
         const tileDir  = tileRule ? tileRule.direction : (isLowerBetter(t) ? 'lower' : 'higher');
+        const showLowerBetter = tileDir === 'lower';
         const barGradient = tileDir === 'lower'
           ? 'linear-gradient(90deg,#C8FF00 0%,#9BDF00 20%,#FFB020 55%,#E84A4A 85%,#E84A4A 100%)'
           : 'linear-gradient(90deg,#E84A4A 0%,#E84A4A 15%,#FFB020 45%,#9BDF00 80%,#C8FF00 100%)';
@@ -1401,6 +1433,7 @@ class Component extends DCLogic {
           score: t.score, scoreDisplay: String(Math.round(t.score)), pillBg: colors.bg, pillFg: colors.fg, statusLabel: colors.label,
           message: t.explanation, showMessage: showTileMessage, resultText,
           hasAsym: hasAsymVal, asymText: hasAsymVal ? `Asym ${t.asym.toFixed(1)}%` : '',
+          showLowerBetter, showAsymmetry,
           norm: { ...normData, barGradient }
         };
       });
